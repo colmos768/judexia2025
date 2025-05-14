@@ -4,6 +4,36 @@
 
   <h2 class="mb-4">📊 Panel de Facturación</h2>
 
+  <!-- Filtros -->
+<form method="get" action="{{ url_for('facturacion') }}" class="row g-3 align-items-end mb-4">
+  <div class="col-md-4">
+    <label for="cliente_id" class="form-label">Filtrar por cliente</label>
+    <select name="cliente_id" id="cliente_id" class="form-select">
+      <option value="">Todos</option>
+      {% for cliente in clientes %}
+        <option value="{{ cliente.id }}" {% if selected_cliente == cliente.id|string %}selected{% endif %}>
+          {{ cliente.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-4">
+    <label for="estado" class="form-label">Filtrar por estado de pago</label>
+    <select name="estado" id="estado" class="form-select">
+      <option value="">Todos</option>
+      <option value="pendiente" {% if selected_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+      <option value="pagado" {% if selected_estado == 'pagado' %}selected{% endif %}>Pagado</option>
+      <option value="vencida" {% if selected_estado == 'vencida' %}selected{% endif %}>Vencida</option>
+    </select>
+  </div>
+
+  <div class="col-md-4 d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+    <a href="{{ url_for('facturacion') }}" class="btn btn-secondary">Limpiar</a>
+  </div>
+</form>
+
   <!-- Botones de acción -->
   <div class="d-flex justify-content-between mb-3">
     <div>
@@ -101,12 +131,34 @@
   </table>
 
   <!-- Espacio para gráfico -->
-  <div class="mt-5">
-    <h4>📈 Gráfico de Pagos</h4>
-    <canvas id="graficoPagos" height="100"></canvas>
-  </div>
-
+<div class="mt-5">
+  <h4>📈 Gráfico de Pagos</h4>
+  <canvas id="graficoPagos" height="100"></canvas>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('graficoPagos').getContext('2d');
+  const graficoPagos = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+      datasets: [{
+        label: 'Pagos semanales',
+        data: [150000, 90000, 120000, 70000],
+        borderWidth: 1,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
