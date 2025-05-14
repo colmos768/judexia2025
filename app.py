@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Response, flash
 from flask_sqlalchemy import SQLAlchemy
 import os
+import uuid
 from datetime import datetime
 
 # ========== IA IMPORTS ==========
@@ -65,6 +66,18 @@ class Pago(db.Model):
     monto = db.Column(db.Float, nullable=False)
     fecha = db.Column(db.String(20))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+
+class FormatoLegal(db.Model):
+    __tablename__ = 'formatos_legales'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_original = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False, unique=True)
+    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario = db.Column(db.String(100))
+    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
+    causa = db.relationship('Causa', backref='formatos')
+    version = db.Column(db.Integer, default=1)
+    observaciones = db.Column(db.String(255))
 
 with app.app_context():
     db.create_all()
@@ -180,26 +193,46 @@ def registrar_causa():
 def facturacion():
     return render_template("facturacion.html")
 
-@app.route("/formatos")
+@app.route("/formatos", methods=["GET", "POST"])
 def formatos():
-    archivos = [f for f in os.listdir("static/formatos") if f != ".keep"]
-    return render_template("formatos.html", archivos=archivos)
+    if request.method == "POST":
+        archivo = request.files["archivo"]
+        usuario = request.form.get("usuario", "Desconocido")
+        causa_id = request.form.get("causa_id") or None
+        observaciones = request.form.get("observaciones") or ""
 
-@app.route("/subir_formato", methods=["POST"])
-def subir_formato():
-    archivo = request.files["archivo"]
-    if archivo:
-        ruta = os.path.join("static/formatos", archivo.filename)
-        archivo.save(ruta)
-        flash("✅ Archivo subido exitosamente.")
-    return redirect(url_for("formatos"))
+        if archivo:
+            nombre_original = archivo.filename
+            nombre_unico = f"{uuid.uuid4().hex}_{nombre_original}"
+            ruta = os.path.join("static", "formatos", nombre_unico)
+            archivo.save(ruta)
 
-@app.route("/eliminar_formato/<nombre>")
-def eliminar_formato(nombre):
-    ruta = os.path.join("static/formatos", nombre)
-    if os.path.exists(ruta):
-        os.remove(ruta)
-        flash("🗑️ Archivo eliminado correctamente.")
+            nuevo_formato = FormatoLegal(
+                nombre_original=nombre_original,
+                filename=nombre_unico,
+                usuario=usuario,
+                causa_id=causa_id,
+                observaciones=observaciones
+            )
+            db.session.add(nuevo_formato)
+            db.session.commit()
+            flash("✅ Formato subido correctamente.")
+        return redirect(url_for("formatos"))
+
+    formatos = FormatoLegal.query.order_by(FormatoLegal.fecha_subida.desc()).all()
+    causas = Causa.query.all()
+    return render_template("formatos.html", formatos=formatos, causas=causas)
+
+@app.route("/formatos/eliminar/<int:id>", methods=["POST"])
+def eliminar_formato(id):
+    formato = FormatoLegal.query.get(id)
+    if formato:
+        ruta = os.path.join("static", "formatos", formato.filename)
+        if os.path.exists(ruta):
+            os.remove(ruta)
+        db.session.delete(formato)
+        db.session.commit()
+        flash("🗑️ Formato eliminado correctamente.")
     return redirect(url_for("formatos"))
 
 @app.route("/ia")
