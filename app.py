@@ -194,9 +194,33 @@ def registrar_causa():
     db.session.commit()
     return redirect(url_for("causas"))
 
-@app.route("/facturacion")
+@app.route('/facturacion', methods=['GET', 'POST'])
 def facturacion():
-    return render_template("facturacion.html")
+    clientes = Cliente.query.all()
+    selected_cliente = request.args.get('cliente_id')
+    selected_estado = request.args.get('estado')
+
+    honorarios_query = Honorario.query
+    pagos_query = PagoCuota.query
+
+    if selected_cliente:
+        honorarios_query = honorarios_query.filter_by(cliente_id=selected_cliente)
+        pagos_query = pagos_query.join(Honorario).filter(Honorario.cliente_id == selected_cliente)
+
+    if selected_estado:
+        pagos_query = pagos_query.filter_by(estado=selected_estado)
+
+    honorarios = honorarios_query.order_by(Honorario.fecha_emision.desc()).all()
+    pagos = pagos_query.order_by(PagoCuota.fecha_pago.desc()).all()
+
+    return render_template(
+        'facturacion.html',
+        honorarios=honorarios,
+        pagos=pagos,
+        clientes=clientes,
+        selected_cliente=selected_cliente,
+        selected_estado=selected_estado
+    )
 
 @app.route("/formatos", methods=["GET", "POST"])
 def formatos():
