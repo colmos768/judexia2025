@@ -1,77 +1,125 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-6">
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded">
-        {{ messages[0] }}
-    </div>
-    {% endif %}
-    {% endwith %}
 
-    <h2 class="text-2xl font-bold mb-4">Gestión de Formatos Legales</h2>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar izquierdo -->
+        <div class="col-md-2">
+            <!-- Ya contenido por base.html -->
+        </div>
 
-    <!-- Filtros -->
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <input type="text" name="nombre" placeholder="Buscar por nombre"
-               value="{{ filtro_nombre }}" class="border px-3 py-2 rounded w-full">
-        <input type="text" name="usuario" placeholder="Buscar por usuario"
-               value="{{ filtro_usuario }}" class="border px-3 py-2 rounded w-full">
-        <select name="causa_id" class="border px-3 py-2 rounded w-full">
-            <option value="">Todas las causas</option>
-            {% for causa in causas %}
-            <option value="{{ causa.id }}" {% if filtro_causa|int == causa.id %}selected{% endif %}>
-                {{ causa.tipo }} - {{ causa.rol }}
-            </option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded col-span-1 md:col-span-3 hover:bg-black transition">
-            Aplicar filtros
-        </button>
-    </form>
+        <!-- Contenido principal -->
+        <div class="col-md-10">
+            <!-- Barra superior -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Dashboard</h2>
+                <a href="/login" class="btn btn-danger fw-semibold">Cerrar sistema</a>
+            </div>
 
-    <!-- Formulario de subida -->
-    <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        <input type="file" name="archivo" required class="border px-3 py-2 rounded w-full">
-        <input type="text" name="usuario" placeholder="Nombre del usuario" class="border px-3 py-2 rounded w-full">
-        <select name="causa_id" class="border px-3 py-2 rounded w-full">
-            <option value="">(Opcional) Asociar a una causa</option>
-            {% for causa in causas %}
-            <option value="{{ causa.id }}">{{ causa.tipo }} - {{ causa.rol }}</option>
-            {% endfor %}
-        </select>
-        <input type="text" name="observaciones" placeholder="Observaciones (opcional)" class="border px-3 py-2 rounded col-span-2">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-            Subir formato
-        </button>
-    </form>
-
-    <!-- Lista de formatos -->
-    <div class="space-y-4">
-        {% for f in formatos %}
-        <div class="bg-white shadow border rounded p-4 flex justify-between items-center">
-            <div>
-                <strong class="block text-lg">{{ f.nombre_original }}</strong>
-                <div class="text-sm text-gray-600">
-                    Usuario: {{ f.usuario or 'N/D' }} |
-                    Fecha: {{ f.fecha_subida.strftime('%d-%m-%Y') }}
-                    {% if f.causa %}| Causa: {{ f.causa.tipo }} {{ f.causa.rol }}{% endif %}
-                    {% if f.observaciones %}<br>📝 {{ f.observaciones }}{% endif %}
+            <!-- Tarjetas resumen -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="bg-primary text-white p-3 rounded shadow text-center">
+                        <div class="fs-4 fw-bold">{{ causas_mes }}</div>
+                        <div>Causas del mes</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-success text-white p-3 rounded shadow text-center">
+                        <div class="fs-4 fw-bold">{{ clientes_nuevos }}</div>
+                        <div>Clientes nuevos</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-warning text-white p-3 rounded shadow text-center">
+                        <div class="fs-4 fw-bold">{{ audiencias_proximas }}</div>
+                        <div>Audiencias próximas</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-danger text-white p-3 rounded shadow text-center">
+                        <div class="fs-4 fw-bold">{{ honorarios_pendientes }}</div>
+                        <div>Honorarios pendientes</div>
+                    </div>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <a href="{{ url_for('static', filename='formatos/' ~ f.filename) }}" target="_blank"
-                   class="text-blue-600 hover:underline font-semibold">Ver</a>
-                <form method="POST" action="{{ url_for('eliminar_formato', id=f.id) }}">
-                    <button type="submit" class="text-red-600 hover:underline font-semibold">Eliminar</button>
-                </form>
+
+            <!-- Gráfico y recordatorios -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-semibold">
+                            <i class="bi bi-graph-up"></i> Causas
+                        </div>
+                        <div class="card-body">
+                            <canvas id="graficoCausas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-semibold">
+                            <i class="bi bi-list-check"></i> Recordatorios
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {% for item in recordatorios %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><i class="bi bi-square"></i> {{ item.texto }}</div>
+                                {% if item.tag %}
+                                <span class="badge rounded-pill 
+                                    {% if 'Hoy' in item.tag %} bg-primary
+                                    {% elif 'días' in item.tag %} bg-warning
+                                    {% elif 'sema' in item.tag %} bg-danger
+                                    {% else %} bg-secondary {% endif %}">
+                                    {{ item.tag }}
+                                </span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
+
         </div>
-        {% endfor %}
     </div>
 </div>
-{% endblock %}
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('graficoCausas').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ meses | tojson }},
+            datasets: [{
+                label: 'Causas',
+                data: {{ grafico_causas | tojson }},
+                backgroundColor: 'rgba(26, 35, 126, 0.2)',
+                borderColor: '#1a237e',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#1a237e'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
 
 
 
