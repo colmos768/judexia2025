@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>💳 Registrar Pago - Cliente: {{ honorario.cliente.nombre }}</h2>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="numero_cuota" class="form-label">Número de Cuota</label>
+      <input type="number" name="numero_cuota" id="numero_cuota" class="form-control" min="1" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="monto_pagado" class="form-label">Monto Pagado</label>
+      <input type="number" name="monto_pagado" id="monto_pagado" class="form-control" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="fecha_pago" class="form-label">Fecha de Pago</label>
+      <input type="date" name="fecha_pago" id="fecha_pago" class="form-control" value="{{ date.today() }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="vencimiento" class="form-label">Fecha de Vencimiento (opcional)</label>
+      <input type="date" name="vencimiento" id="vencimiento" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Pago</button>
+    <a href="{{ url_for('facturacion') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
