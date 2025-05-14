@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, Response, 
 from flask_sqlalchemy import SQLAlchemy
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 import openai
 import PyPDF2
 import docx
@@ -138,7 +138,7 @@ def similitud_coseno(a, b):
     b = np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-# ========== RUTAS PRINCIPALES ==========
+# ========== RUTAS ==========
 @app.route("/")
 def index():
     return redirect(url_for("dashboard"))
@@ -146,6 +146,10 @@ def index():
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    return redirect(url_for("login"))
 
 @app.route("/dashboard")
 def dashboard():
@@ -229,7 +233,6 @@ def formatos():
             flash("✅ Formato subido correctamente.")
         return redirect(url_for("formatos"))
 
-    # Filtros GET
     nombre = request.args.get("nombre", "")
     usuario = request.args.get("usuario", "")
     causa_id = request.args.get("causa_id", "")
@@ -257,10 +260,6 @@ def eliminar_formato(id):
         db.session.commit()
         flash("🗑️ Formato eliminado correctamente.")
     return redirect(url_for("formatos"))
-
-@app.route("/logout")
-def logout():
-    return redirect(url_for("login"))
 
 @app.route("/ia")
 def ia():
@@ -343,7 +342,7 @@ def registrar_honorario():
             causa_id=data.get('causa_id') or None,
             descripcion=data['descripcion'],
             monto_total=float(data['monto_total']),
-            fecha_emision=data.get('fecha_emision') or datetime.utcnow().date(),
+            fecha_emision=data.get('fecha_emision') or date.today(),
             en_cuotas=data.get('en_cuotas') == 'on',
             numero_cuotas=int(data.get('numero_cuotas') or 1),
             estado='pendiente'
@@ -354,7 +353,7 @@ def registrar_honorario():
 
     clientes = Cliente.query.all()
     causas = Causa.query.all()
-    return render_template('registrar_honorario.html', clientes=clientes, causas=causas)
+    return render_template('registrar_honorario.html', clientes=clientes, causas=causas, date_today=date.today())
 
 @app.route('/registrar_pago/<int:honorario_id>', methods=['GET', 'POST'])
 def registrar_pago(honorario_id):
