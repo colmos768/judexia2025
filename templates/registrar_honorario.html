@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>➕ Registrar Honorario</h2>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="cliente_id" class="form-label">Cliente</label>
+      <select name="cliente_id" id="cliente_id" class="form-select" required>
+        {% for cliente in clientes %}
+        <option value="{{ cliente.id }}">{{ cliente.nombre }} ({{ cliente.rut }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="causa_id" class="form-label">Causa (opcional)</label>
+      <select name="causa_id" id="causa_id" class="form-select">
+        <option value="">-- Sin causa --</option>
+        {% for causa in causas %}
+        <option value="{{ causa.id }}">{{ causa.rol }} - {{ causa.tribunal }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="descripcion" class="form-label">Descripción</label>
+      <input type="text" name="descripcion" id="descripcion" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="monto_total" class="form-label">Monto Total</label>
+      <input type="number" name="monto_total" id="monto_total" class="form-control" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
+      <input type="date" name="fecha_emision" id="fecha_emision" class="form-control" value="{{ date.today() }}">
+    </div>
+
+    <div class="form-check mb-3">
+      <input type="checkbox" name="en_cuotas" id="en_cuotas" class="form-check-input">
+      <label for="en_cuotas" class="form-check-label">¿Dividir en cuotas?</label>
+    </div>
+
+    <div class="mb-3">
+      <label for="numero_cuotas" class="form-label">Número de Cuotas</label>
+      <input type="number" name="numero_cuotas" id="numero_cuotas" class="form-control" min="1" value="1">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar Honorario</button>
+    <a href="{{ url_for('facturacion') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
