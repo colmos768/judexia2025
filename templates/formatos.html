@@ -3,114 +3,72 @@
 
 <div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-6">
 
-    <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2">📂 Gestión de Formatos Legales</h2>
+  <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2">📂 Gestión de Formatos Legales</h2>
 
-<form method="GET" action="{{ url_for('formatos') }}" class="space-y-4">
+  <!-- FORMULARIO DE FILTRO -->
+  <form method="GET" action="{{ url_for('formatos') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ filtro_nombre }}" class="p-2 border rounded bg-gray-50">
+    <input type="text" name="usuario" placeholder="Buscar por usuario" value="{{ filtro_usuario }}" class="p-2 border rounded bg-gray-50">
+    <select name="causa_id" class="p-2 border rounded bg-gray-50">
+      <option value="">Todas las causas</option>
+      {% for causa in causas %}
+        <option value="{{ causa.id }}" {% if filtro_causa == causa.id|string %}selected{% endif %}>
+          {{ causa.tipo }} - {{ causa.rol }}
+        </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="col-span-1 md:col-span-3 p-2 bg-blue-600 text-white rounded hover:bg-blue-700">Aplicar filtros</button>
+  </form>
 
-    <form action="{{ url_for('formatos') }}" method="POST" enctype="multipart/form-data">
+  <!-- FORMULARIO DE SUBIDA -->
+  <form action="{{ url_for('formatos') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <input type="file" name="archivo" required class="p-2 border rounded w-full bg-gray-50">
+    <input type="text" name="usuario" placeholder="Nombre del usuario" class="p-2 border rounded w-full bg-gray-50">
+    <select name="causa_id" class="p-2 border rounded w-full bg-gray-50">
+      <option value="">(Opcional) Asociar a una causa</option>
+      {% for causa in causas %}
+        <option value="{{ causa.id }}">{{ causa.tipo }} - {{ causa.rol }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="observaciones" placeholder="Observaciones (opcional)" class="p-2 border rounded w-full bg-gray-50">
+    <button type="submit" class="p-2 bg-green-600 text-white rounded hover:bg-green-700">📤 Subir formato</button>
+  </form>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <!-- LISTA DE FORMATOS -->
+  <div class="pt-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-2">🗂️ Formatos disponibles</h3>
+    {% if formatos %}
+      <ul class="divide-y divide-gray-200">
+        {% for formato in formatos %}
+          <li class="py-2 flex justify-between items-center">
             <div>
-                <label class="block text-sm font-medium text-gray-700">Buscar por nombre</label>
-                <select name="buscar_nombre" class="w-full p-2 border rounded bg-gray-50">
-                    <option value="">-- Seleccionar --</option>
-                    {% for nombre in nombres %}
-                        <option value="{{ nombre }}">{{ nombre }}</option>
-                    {% endfor %}
-                </select>
+              <a href="{{ url_for('static', filename='formatos/' + formato.filename) }}" target="_blank" class="text-blue-600 hover:underline">{{ formato.nombre_original }}</a>
+              <p class="text-sm text-gray-500">
+                Subido por {{ formato.usuario or "Desconocido" }} el {{ formato.fecha_subida.strftime('%d-%m-%Y') }}
+                {% if formato.observaciones %} – {{ formato.observaciones }}{% endif %}
+              </p>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Buscar por usuario</label>
-                <select name="buscar_usuario" class="w-full p-2 border rounded bg-gray-50">
-                    <option value="">-- Seleccionar --</option>
-                    {% for usuario in usuarios %}
-                        <option value="{{ usuario }}">{{ usuario }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Todas las causas</label>
-                <select name="causa" class="w-full p-2 border rounded bg-gray-50">
-                    <option value="">-- Seleccionar --</option>
-                    {% for causa in causas %}
-                        <option value="{{ causa }}">{{ causa }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Seleccionar archivo</label>
-                <input type="file" name="archivo" required class="w-full p-2 border rounded bg-white file:bg-judexia file:text-white file:rounded file:px-4 file:py-2 file:cursor-pointer" />
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Nombre del usuario</label>
-                <input type="text" name="usuario" required class="w-full p-2 border rounded bg-gray-50" />
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">(Opcional) Asociar a una causa</label>
-                <select name="asociar_causa" class="w-full p-2 border rounded bg-gray-50">
-                    <option value="">-- Ninguna --</option>
-                    {% for causa in causas %}
-                        <option value="{{ causa }}">{{ causa }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700">Observaciones (opcional)</label>
-            <textarea name="observaciones" rows="2" class="w-full p-2 border rounded bg-gray-50"></textarea>
-        </div>
-
-        <div class="flex justify-end">
-            <button type="submit" class="bg-judexia hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded transition">
-                📤 Subir formato
-            </button>
-        </div>
-    </form>
-
-    <hr class="border-t mt-6" />
-
-    <h3 class="text-xl font-semibold text-gray-800 mt-4">📁 Formatos disponibles</h3>
-    <div id="lista-formatos" class="space-y-2">
-        <!-- Se llenará por JS -->
-    </div>
+            <form action="{{ url_for('eliminar_formato', id=formato.id) }}" method="POST">
+              <button class="text-red-500 hover:text-red-700 text-sm">Eliminar</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-gray-600">No hay formatos aún.</p>
+    {% endif %}
+  </div>
 
 </div>
 
-<script>
-    fetch('/formatos_disponibles')
-        .then(response => response.json())
-        .then(data => {
-            const lista = document.getElementById('lista-formatos');
-            if (data.length === 0) {
-                lista.innerHTML = "<p class='text-gray-500'>No hay formatos cargados.</p>";
-            } else {
-                data.forEach(formato => {
-                    const item = document.createElement('div');
-                    item.className = 'p-3 rounded border flex justify-between items-center bg-gray-50';
-                    item.innerHTML = `
-                        <span class="text-sm text-gray-700 truncate w-2/3">${formato.nombre}</span>
-                        <a href="/${formato.ruta}" download class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm">Descargar</a>
-                    `;
-                    lista.appendChild(item);
-                });
-            }
-        });
-</script>
-
 <style>
-    .bg-judexia {
-        background-color: #1f2a60; /* azul institucional */
-    }
+  .bg-judexia {
+    background-color: #1f2a60;
+  }
 </style>
 
 {% endblock %}
+
 
 
 
