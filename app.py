@@ -1,25 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, Response, flash
 from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
 import os
 from datetime import datetime
 
-# Cargar variables del entorno
-load_dotenv()
-
-# Configuración de la app
+# Inicializar Flask
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_para_flash'
 
+# Cargar y configurar DATABASE_URL
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
-    raise Exception("❌ DATABASE_URL no definida. Verifica el .env o las variables del entorno en Render.")
+    raise Exception("❌ DATABASE_URL no definida. Verifica las variables del entorno en Render.")
 
-# Compatibilidad con postgres://
+# Adaptar URL para PostgreSQL
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-# Forzar uso de SSL si no está explícito
 if "?" in DATABASE_URL and "sslmode=" not in DATABASE_URL:
     DATABASE_URL += "&sslmode=require"
 elif "?" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
@@ -28,10 +23,10 @@ elif "?" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Inicializar base de datos
+# Inicializar DB
 db = SQLAlchemy(app)
 
-# MODELOS
+# ========== MODELOS ==========
 class Cliente(db.Model):
     __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
@@ -41,7 +36,6 @@ class Cliente(db.Model):
     telefono = db.Column(db.String(20))
     direccion = db.Column(db.String(200))
     fecha_nacimiento = db.Column(db.Date)
-
     causas = db.relationship('Causa', backref='cliente', lazy=True)
     pagos = db.relationship('Pago', backref='cliente', lazy=True)
 
@@ -60,8 +54,11 @@ class Pago(db.Model):
     fecha = db.Column(db.String(20))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
 
-# RUTAS
+# Crear tablas automáticamente al arrancar
+with app.app_context():
+    db.create_all()
 
+# ========== RUTAS ==========
 @app.route("/")
 def index():
     return redirect(url_for("dashboard"))
@@ -72,10 +69,8 @@ def dashboard():
     clientes_nuevos = 12
     audiencias_proximas = 8
     honorarios_pendientes = 15
-
     meses = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug"]
     grafico_causas = [3, 4, 6, 5, 9, 17, 11, 13]
-
     recordatorios = [
         {"texto": "Crear nuevo formato", "tag": "Hoy"},
         {"texto": "Actualizar agenda", "tag": "Hoy"},
@@ -83,8 +78,7 @@ def dashboard():
         {"texto": "Programar reunión con cliente", "tag": None},
         {"texto": "Preparar informe semanal", "tag": "1 sema"}
     ]
-
-    return render_template("dashboard.html", 
+    return render_template("dashboard.html",
                            causas_mes=causas_mes,
                            clientes_nuevos=clientes_nuevos,
                            audiencias_proximas=audiencias_proximas,
@@ -106,15 +100,9 @@ def registrar_cliente():
     telefono = request.form["telefono"]
     direccion = request.form["direccion"]
     fecha_nacimiento = datetime.strptime(request.form["fecha_nacimiento"], "%Y-%m-%d")
-
-    nuevo = Cliente(
-        nombre=nombre,
-        rut=rut,
-        email=email,
-        telefono=telefono,
-        direccion=direccion,
-        fecha_nacimiento=fecha_nacimiento
-    )
+    nuevo = Cliente(nombre=nombre, rut=rut, email=email,
+                    telefono=telefono, direccion=direccion,
+                    fecha_nacimiento=fecha_nacimiento)
     db.session.add(nuevo)
     db.session.commit()
     return redirect(url_for("clientes"))
@@ -131,18 +119,10 @@ def registrar_causa():
     rol = request.form["rol"]
     tribunal = request.form["tribunal"]
     cliente_id = int(request.form["cliente_id"])
-
-    nueva = Causa(
-        tipo=tipo,
-        rol=rol,
-        tribunal=tribunal,
-        cliente_id=cliente_id
-    )
+    nueva = Causa(tipo=tipo, rol=rol, tribunal=tribunal, cliente_id=cliente_id)
     db.session.add(nueva)
     db.session.commit()
     return redirect(url_for("causas"))
-
-# MODULOS EXTRA
 
 @app.route("/facturacion")
 def facturacion():
@@ -196,15 +176,12 @@ def eliminar_ia(nombre):
 def servicio():
     return render_template("servicio.html")
 
-# Ruta temporal para crear tablas
-@app.route("/crear_tablas")
-def crear_tablas_web():
-    try:
-        db.create_all()
-        return Response("✅ Tablas creadas exitosamente en PostgreSQL.", status=200)
-    except Exception as e:
-        import traceback
-        return Response(f"❌ Error al crear las tablas:<br><pre>{traceback.format_exc()}</pre>", status=500)
+# No se necesita más esta ruta porque las tablas se crean al inicio
+# @app.route("/crear_tablas")
+
+# Ejecutar localmente
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
 
