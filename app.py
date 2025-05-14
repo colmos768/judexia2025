@@ -143,6 +143,10 @@ def similitud_coseno(a, b):
 def index():
     return redirect(url_for("dashboard"))
 
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
 @app.route("/dashboard")
 def dashboard():
     causas_mes = 32
