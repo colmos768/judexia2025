@@ -1,40 +1,106 @@
-{% extends 'base.html' %}
-
-{% block title %}Biblioteca IA - Judexia{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-<h1>Biblioteca de Archivos para IA</h1>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+<style>
+    .alerta {
+        background-color: #e6f4ea;
+        color: #2f6627;
+        border-left: 6px solid #2f6627;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    .boton-subir {
+        background-color: #007bff;
+        color: white;
+        padding: 6px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .boton-eliminar {
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 3px;
+    }
+    .boton-preguntar {
+        background-color: #28a745;
+        color: white;
+        padding: 6px 16px;
+        border: none;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    .pregunta-input {
+        width: 100%;
+        padding: 8px;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+    .respuesta-ia {
+        background: #f8f9fa;
+        border: 1px solid #ced4da;
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+</style>
 
-<form action="{{ url_for('subir_ia') }}" method="POST" enctype="multipart/form-data" style="margin-bottom: 20px;">
-    <input type="file" name="archivo" required style="display:block; margin-bottom:10px;">
-    <button type="submit" class="btn">Subir archivo IA</button>
-</form>
+<div class="contenido">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alerta">
+          ✅ {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-<table>
-    <thead>
-        <tr>
-            <th>Archivo</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for archivo in archivos %}
-        <tr>
-            <td>{{ archivo }}</td>
-            <td>
-                <a href="{{ url_for('static', filename='ia/' + archivo) }}" target="_blank">Ver</a>
-                <a href="{{ url_for('eliminar_ia', nombre=archivo) }}" class="btn btn-danger" onclick="return confirm('¿Eliminar este archivo?');">Eliminar</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <h2>Biblioteca de Archivos para IA</h2>
+
+    <form action="/subir_ia" method="post" enctype="multipart/form-data">
+        <input type="file" name="archivo" required>
+        <button type="submit" class="boton-subir">Subir archivo IA</button>
+    </form>
+
+    <h3 style="margin-top:30px;">Archivos disponibles</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Archivo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for archivo in archivos %}
+            <tr>
+                <td>{{ archivo }}</td>
+                <td>
+                    <a href="{{ url_for('static', filename='ia/' + archivo) }}" target="_blank">Ver</a> |
+                    <a href="{{ url_for('eliminar_ia', nombre=archivo) }}">
+                        <button class="boton-eliminar">Eliminar</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3 style="margin-top:40px;">Hazle una pregunta a la IA sobre el archivo</h3>
+    <form action="/preguntar_ia" method="post">
+        <input type="text" name="pregunta" class="pregunta-input" placeholder="Escribe tu pregunta aquí..." required>
+        <button type="submit" class="boton-preguntar">Preguntar</button>
+    </form>
+
+    {% if respuesta %}
+    <div class="respuesta-ia">
+        <strong>Respuesta IA:</strong><br>
+        {{ respuesta }}
+    </div>
+    {% endif %}
+</div>
+
 {% endblock %}
+
