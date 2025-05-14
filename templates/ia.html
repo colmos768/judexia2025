@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Biblioteca IA - Judexia{% endblock %}
+
+{% block content %}
+<h1>Biblioteca de Archivos para IA</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<form action="{{ url_for('subir_ia') }}" method="POST" enctype="multipart/form-data" style="margin-bottom: 20px;">
+    <input type="file" name="archivo" required style="display:block; margin-bottom:10px;">
+    <button type="submit" class="btn">Subir archivo IA</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Archivo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for archivo in archivos %}
+        <tr>
+            <td>{{ archivo }}</td>
+            <td>
+                <a href="{{ url_for('static', filename='ia/' + archivo) }}" target="_blank">Ver</a>
+                <a href="{{ url_for('eliminar_ia', nombre=archivo) }}" class="btn btn-danger" onclick="return confirm('¿Eliminar este archivo?');">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

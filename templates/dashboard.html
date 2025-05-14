@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4 px-4">
+    <h2 class="fw-bold mb-4">Dashboard</h2>
+
+    <!-- Tarjetas resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary rounded-4 shadow text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold">{{ causas_mes }}</h3>
+                    <p>Causas del mes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success rounded-4 shadow text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold">{{ clientes_nuevos }}</h3>
+                    <p>Clientes nuevos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-dark bg-warning rounded-4 shadow text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold">{{ audiencias_proximas }}</h3>
+                    <p>Audiencias próximas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger rounded-4 shadow text-center">
+                <div class="card-body">
+                    <h3 class="fw-bold">{{ honorarios_pendientes }}</h3>
+                    <p>Honorarios pendientes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Causas y recordatorios -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card rounded-4 shadow">
+                <div class="card-header fw-bold">
+                    <i class="bi bi-bar-chart-line"></i> Causas
+                </div>
+                <div class="card-body">
+                    <canvas id="graficoCausas"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card rounded-4 shadow">
+                <div class="card-header fw-bold">
+                    <i class="bi bi-list-task"></i> Recordatorios
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for recordatorio in recordatorios %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><input type="checkbox" class="form-check-input me-2">{{ recordatorio.texto }}</span>
+                            {% if recordatorio.tag %}
+                            <span class="badge bg-info text-dark">{{ recordatorio.tag }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segundo bloque de recordatorios -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card rounded-4 shadow">
+                <div class="card-header fw-bold">
+                    <i class="bi bi-check2-square"></i> Recordatorios
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for recordatorio in recordatorios %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><input type="checkbox" class="form-check-input me-2">{{ recordatorio.texto }}</span>
+                            {% if recordatorio.tag %}
+                            <span class="badge bg-info text-dark">{{ recordatorio.tag }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('graficoCausas').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ meses | tojson }},
+            datasets: [{
+                label: 'Causas por mes',
+                data: {{ grafico_causas | tojson }},
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+
+

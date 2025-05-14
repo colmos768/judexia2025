@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Judexia{% endblock %}</title>
+
+    <!-- Tipografía -->
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            width: 220px;
+            position: fixed;
+            height: 100%;
+            background-color: #1a237e;
+            padding-top: 20px;
+            color: white;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background-color: #3949ab;
+        }
+        .topbar {
+            height: 50px;
+            background-color: #ffffff;
+            padding: 10px 30px;
+            margin-left: 220px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .content {
+            margin-left: 220px;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="/dashboard"><img src="{{ url_for('static', filename='img/logo_judexia.png') }}" alt="Judexia Logo" style="width: 160px; margin-left: 20px; margin-bottom: 20px;"></a>
+        <a href="/clientes">Clientes</a>
+        <a href="/causas">Causas</a>
+        <a href="/facturacion">Honorarios</a>
+        <a href="/formatos">Formatos</a>
+        <a href="/ia">IA</a>
+        <a href="/servicio">Configuración</a>
+    </div>
+
+    <!-- Topbar -->
+    <div class="topbar">
+        <a href="/login" class="text-decoration-none">Cerrar sesión</a>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</body>
+</html>

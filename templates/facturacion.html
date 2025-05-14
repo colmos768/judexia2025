@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Honorarios - Judexia{% endblock %}
+
+{% block content %}
+<h1>Honorarios</h1>
+
+<a href="#" class="btn">Registrar nuevo pago</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pago in pagos %}
+        <tr>
+            <td>{{ pago.id }}</td>
+            <td>{{ pago.cliente.nombre }}</td>
+            <td>${{ pago.monto }}</td>
+            <td>{{ pago.fecha }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+

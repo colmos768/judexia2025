@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold mb-4">Clientes</h2>
+
+    <form action="{{ url_for('registrar_cliente') }}" method="POST" class="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded-xl shadow">
+        <input name="nombre" placeholder="Nombre completo" required class="input input-bordered" />
+        <input name="rut" placeholder="RUT" required class="input input-bordered" />
+        <input name="email" placeholder="Correo electrónico" class="input input-bordered" />
+        <input name="telefono" placeholder="Teléfono" class="input input-bordered" />
+        <input name="direccion" placeholder="Dirección" class="input input-bordered col-span-2" />
+        <input name="fecha_nacimiento" type="date" required class="input input-bordered" />
+        <button type="submit" class="btn btn-primary col-span-2">Registrar cliente</button>
+    </form>
+
+    <h3 class="text-xl font-semibold mb-2">Listado de clientes</h3>
+    <div class="overflow-x-auto">
+        <table class="table-auto w-full text-sm bg-white rounded-xl shadow">
+            <thead>
+                <tr class="bg-gray-100 text-left">
+                    <th class="px-4 py-2">Nombre</th>
+                    <th class="px-4 py-2">RUT</th>
+                    <th class="px-4 py-2">Correo</th>
+                    <th class="px-4 py-2">Teléfono</th>
+                    <th class="px-4 py-2">Dirección</th>
+                    <th class="px-4 py-2">Fecha Nac.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clientes %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2">{{ c.nombre }}</td>
+                    <td class="px-4 py-2">{{ c.rut }}</td>
+                    <td class="px-4 py-2">{{ c.email }}</td>
+                    <td class="px-4 py-2">{{ c.telefono }}</td>
+                    <td class="px-4 py-2">{{ c.direccion }}</td>
+                    <td class="px-4 py-2">{{ c.fecha_nacimiento.strftime('%d-%m-%Y') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+

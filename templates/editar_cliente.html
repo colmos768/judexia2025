@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Cliente - Judexia{% endblock %}
+
+{% block content %}
+<h1>Editar Cliente</h1>
+
+<form method="POST" action="{{ url_for('editar_cliente', cliente_id=cliente.id) }}">
+    <div>
+        <label>Nombre:</label><br>
+        <input type="text" name="nombre" value="{{ cliente.nombre }}" required>
+    </div>
+    <div>
+        <label>RUT:</label><br>
+        <input type="text" name="rut" value="{{ cliente.rut }}" required>
+    </div>
+    <div>
+        <label>Email:</label><br>
+        <input type="email" name="email" value="{{ cliente.email }}">
+    </div>
+    <div>
+        <label>Teléfono:</label><br>
+        <input type="text" name="telefono" value="{{ cliente.telefono }}">
+    </div>
+    <div>
+        <label>Dirección:</label><br>
+        <input type="text" name="direccion" value="{{ cliente.direccion }}">
+    </div>
+    <div>
+        <label>Fecha de Nacimiento:</label><br>
+        <input type="date" name="fecha_nacimiento" value="{{ cliente.fecha_nacimiento.strftime('%Y-%m-%d') if cliente.fecha_nacimiento else '' }}">
+    </div>
+    <br>
+    <button type="submit" class="btn">Guardar Cambios</button>
+    <a href="{{ url_for('clientes') }}" class="btn btn-danger">Cancelar</a>
+</form>
+{% endblock %}
