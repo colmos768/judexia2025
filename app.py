@@ -3,16 +3,28 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
 
+# ========== IA IMPORTS ==========
+import openai
+import PyPDF2
+import docx
+import tiktoken
+import numpy as np
+
 # Inicializar Flask
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_para_flash'
+
+# Crear carpetas necesarias
+os.makedirs("static/ia", exist_ok=True)
+os.makedirs("static/formatos", exist_ok=True)
+
+# Configurar API KEY de OpenAI
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Cargar y configurar DATABASE_URL
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise Exception("❌ DATABASE_URL no definida. Verifica las variables del entorno en Render.")
-
-# Adaptar URL para PostgreSQL
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 if "?" in DATABASE_URL and "sslmode=" not in DATABASE_URL:
@@ -54,9 +66,49 @@ class Pago(db.Model):
     fecha = db.Column(db.String(20))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
 
-# Crear tablas automáticamente
 with app.app_context():
     db.create_all()
+
+# ========== FUNCIONES IA ==========
+def extraer_texto(path):
+    if path.endswith(".pdf"):
+        with open(path, "rb") as f:
+            lector = PyPDF2.PdfReader(f)
+            return " ".join([p.extract_text() or "" for p in lector.pages])
+    elif path.endswith(".docx"):
+        doc = docx.Document(path)
+        return "\n".join([p.text for p in doc.paragraphs])
+    elif path.endswith(".txt"):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    else:
+        return ""
+
+def dividir_en_chunks(texto, max_tokens=500):
+    tokenizer = tiktoken.get_encoding("cl100k_base")
+    palabras = texto.split(".")
+    chunks = []
+    actual = ""
+    for p in palabras:
+        if len(tokenizer.encode(actual + p)) < max_tokens:
+            actual += p + "."
+        else:
+            chunks.append(actual.strip())
+            actual = p + "."
+    if actual:
+        chunks.append(actual.strip())
+    return chunks
+
+def obtener_embedding(texto):
+    return openai.Embedding.create(
+        input=texto,
+        model="text-embedding-ada-002"
+    )["data"][0]["embedding"]
+
+def similitud_coseno(a, b):
+    a = np.array(a)
+    b = np.array(b)
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 # ========== RUTAS ==========
 @app.route("/")
@@ -172,11 +224,43 @@ def eliminar_ia(nombre):
         flash("🗑️ Archivo IA eliminado correctamente.")
     return redirect(url_for("ia"))
 
+@app.route("/preguntar_ia", methods=["POST"])
+def preguntar_ia():
+    pregunta = request.form["pregunta"]
+    archivos = sorted(
+        [f for f in os.listdir("static/ia") if f.endswith((".pdf", ".docx", ".txt"))],
+        key=lambda f: os.path.getmtime(os.path.join("static/ia", f)),
+        reverse=True
+    )
+    if not archivos:
+        flash("⚠️ No hay archivos para consultar.")
+        return redirect(url_for("ia"))
+
+    ruta_archivo = os.path.join("static/ia", archivos[0])
+    texto = extraer_texto(ruta_archivo)
+    chunks = dividir_en_chunks(texto)
+
+    embeddings = [obtener_embedding(c) for c in chunks]
+    pregunta_embedding = obtener_embedding(pregunta)
+
+    similitudes = [similitud_coseno(e, pregunta_embedding) for e in embeddings]
+    top_chunk = chunks[np.argmax(similitudes)]
+
+    respuesta = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
+            {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
+        ]
+    )["choices"][0]["message"]["content"]
+
+    archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
+    return render_template("ia.html", archivos=archivos, respuesta=respuesta)
+
 @app.route("/servicio")
 def servicio():
     return render_template("servicio.html")
 
-# Ejecutar localmente
 if __name__ == "__main__":
     app.run(debug=True)
 

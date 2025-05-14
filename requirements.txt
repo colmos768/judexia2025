@@ -5,3 +5,8 @@ flask_sqlalchemy
 jinja2
 python-dotenv
 psycopg2-binary
+openai==0.28
+tiktoken
+PyPDF2
+python-docx
+numpy
