@@ -10,6 +10,11 @@ import PyPDF2
 import docx
 import tiktoken
 import numpy as np
+import io
+import csv
+from flask import make_response
+from models import db, Cliente, Causa, Honorario, PagoCuota
+
 
 # Inicializar Flask
 app = Flask(__name__)
@@ -313,6 +318,91 @@ def servicio():
 def formatos_disponibles():
     archivos = FormatoLegal.query.order_by(FormatoLegal.fecha_subida.desc()).all()
     return render_template("formatos_disponibles.html", archivos=archivos)
+@app.route('/registrar_honorario', methods=['GET', 'POST'])
+def registrar_honorario():
+    if request.method == 'POST':
+        cliente_id = request.form['cliente_id']
+        causa_id = request.form.get('causa_id') or None
+        descripcion = request.form['descripcion']
+        monto_total = float(request.form['monto_total'])
+        fecha_emision = request.form.get('fecha_emision') or datetime.utcnow().date()
+        en_cuotas = request.form.get('en_cuotas') == 'on'
+        numero_cuotas = int(request.form.get('numero_cuotas') or 1)
+
+        nuevo_honorario = Honorario(
+            cliente_id=cliente_id,
+            causa_id=causa_id,
+            descripcion=descripcion,
+            monto_total=monto_total,
+            fecha_emision=fecha_emision,
+            en_cuotas=en_cuotas,
+            numero_cuotas=numero_cuotas,
+            estado='pendiente'
+        )
+        db.session.add(nuevo_honorario)
+        db.session.commit()
+
+        return redirect(url_for('facturacion'))
+
+    clientes = Cliente.query.all()
+    causas = Causa.query.all()
+    return render_template('registrar_honorario.html', clientes=clientes, causas=causas)
+
+@app.route('/facturacion')
+def facturacion():
+    honorarios = Honorario.query.order_by(Honorario.fecha_emision.desc()).all()
+    pagos = PagoCuota.query.order_by(PagoCuota.fecha_pago.desc()).all()
+    clientes = Cliente.query.all()
+    return render_template('facturacion.html', honorarios=honorarios, pagos=pagos, clientes=clientes)
+
+@app.route('/registrar_pago/<int:honorario_id>', methods=['GET', 'POST'])
+def registrar_pago(honorario_id):
+    honorario = Honorario.query.get_or_404(honorario_id)
+
+    if request.method == 'POST':
+        numero_cuota = int(request.form['numero_cuota'])
+        monto_pagado = float(request.form['monto_pagado'])
+        fecha_pago = request.form.get('fecha_pago') or datetime.utcnow().date()
+        vencimiento = request.form.get('vencimiento') or fecha_pago
+
+        nuevo_pago = PagoCuota(
+            honorario_id=honorario.id,
+            numero_cuota=numero_cuota,
+            monto_pagado=monto_pagado,
+            fecha_pago=fecha_pago,
+            vencimiento=vencimiento,
+            estado='pagado'
+        )
+        db.session.add(nuevo_pago)
+        db.session.commit()
+
+        return redirect(url_for('facturacion'))
+
+    return render_template('registrar_pago.html', honorario=honorario)
+
+@app.route('/exportar_facturacion')
+def exportar_facturacion():
+    honorarios = Honorario.query.all()
+
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Cliente', 'Causa', 'Descripción', 'Monto', 'Fecha', 'Cuotas', 'Estado'])
+
+    for h in honorarios:
+        cw.writerow([
+            h.cliente.nombre,
+            h.causa.rol if h.causa else 'Sin causa',
+            h.descripcion,
+            h.monto_total,
+            h.fecha_emision,
+            h.numero_cuotas,
+            h.estado
+        ])
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=facturacion.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 if __name__ == "__main__":
     app.run(debug=True)
