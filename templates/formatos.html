@@ -1,71 +1,96 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-6">
+<div class="p-5 bg-white rounded shadow-sm mx-auto" style="max-width: 960px;">
 
-  <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2">📂 Gestión de Formatos Legales</h2>
+  <h2 class="mb-4 fw-semibold fs-4 text-primary border-bottom pb-2">
+    📂 Gestión de Formatos Legales
+  </h2>
 
   <!-- FORMULARIO DE FILTRO -->
-  <form method="GET" action="{{ url_for('formatos') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <input type="text" name="nombre" placeholder="Buscar por nombre" value="{{ filtro_nombre }}" class="p-2 border rounded bg-gray-50">
-    <input type="text" name="usuario" placeholder="Buscar por usuario" value="{{ filtro_usuario }}" class="p-2 border rounded bg-gray-50">
-    <select name="causa_id" class="p-2 border rounded bg-gray-50">
-      <option value="">Todas las causas</option>
-      {% for causa in causas %}
-        <option value="{{ causa.id }}" {% if filtro_causa == causa.id|string %}selected{% endif %}>
-          {{ causa.tipo }} - {{ causa.rol }}
-        </option>
-      {% endfor %}
-    </select>
-    <button type="submit" class="col-span-1 md:col-span-3 p-2 bg-blue-600 text-white rounded hover:bg-blue-700">Aplicar filtros</button>
+  <form method="GET" action="{{ url_for('formatos') }}" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <input type="text" name="nombre" class="form-control" placeholder="Buscar por nombre" value="{{ filtro_nombre }}">
+    </div>
+    <div class="col-md-4">
+      <input type="text" name="usuario" class="form-control" placeholder="Buscar por usuario" value="{{ filtro_usuario }}">
+    </div>
+    <div class="col-md-4">
+      <select name="causa_id" class="form-select">
+        <option value="">Todas las causas</option>
+        {% for causa in causas %}
+          <option value="{{ causa.id }}" {% if filtro_causa == causa.id|string %}selected{% endif %}>
+            {{ causa.tipo }} - {{ causa.rol }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 text-end">
+      <button type="submit" class="btn btn-judexia">
+        🔍 Aplicar filtros
+      </button>
+    </div>
   </form>
 
   <!-- FORMULARIO DE SUBIDA -->
-  <form action="{{ url_for('formatos') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-    <input type="file" name="archivo" required class="p-2 border rounded w-full bg-gray-50">
-    <input type="text" name="usuario" placeholder="Nombre del usuario" class="p-2 border rounded w-full bg-gray-50">
-    <select name="causa_id" class="p-2 border rounded w-full bg-gray-50">
-      <option value="">(Opcional) Asociar a una causa</option>
-      {% for causa in causas %}
-        <option value="{{ causa.id }}">{{ causa.tipo }} - {{ causa.rol }}</option>
-      {% endfor %}
-    </select>
-    <input type="text" name="observaciones" placeholder="Observaciones (opcional)" class="p-2 border rounded w-full bg-gray-50">
-    <button type="submit" class="p-2 bg-green-600 text-white rounded hover:bg-green-700">📤 Subir formato</button>
+  <form action="{{ url_for('formatos') }}" method="POST" enctype="multipart/form-data" class="row g-3 mb-5">
+    <div class="col-md-6">
+      <label class="form-label">Seleccionar archivo</label>
+      <input type="file" name="archivo" required class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Nombre del usuario</label>
+      <input type="text" name="usuario" class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">(Opcional) Asociar a una causa</label>
+      <select name="causa_id" class="form-select">
+        <option value="">-- Ninguna --</option>
+        {% for causa in causas %}
+          <option value="{{ causa.id }}">{{ causa.tipo }} - {{ causa.rol }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Observaciones (opcional)</label>
+      <input type="text" name="observaciones" class="form-control">
+    </div>
+    <div class="col-12 text-end">
+      <button type="submit" class="btn btn-verde">
+        📤 Subir formato
+      </button>
+    </div>
   </form>
 
   <!-- LISTA DE FORMATOS -->
-  <div class="pt-6">
-    <h3 class="text-lg font-semibold text-gray-700 mb-2">🗂️ Formatos disponibles</h3>
-    {% if formatos %}
-      <ul class="divide-y divide-gray-200">
-        {% for formato in formatos %}
-          <li class="py-2 flex justify-between items-center">
-            <div>
-              <a href="{{ url_for('static', filename='formatos/' + formato.filename) }}" target="_blank" class="text-blue-600 hover:underline">{{ formato.nombre_original }}</a>
-              <p class="text-sm text-gray-500">
-                Subido por {{ formato.usuario or "Desconocido" }} el {{ formato.fecha_subida.strftime('%d-%m-%Y') }}
-                {% if formato.observaciones %} – {{ formato.observaciones }}{% endif %}
-              </p>
+  <h4 class="fw-semibold mb-3">📁 Formatos disponibles</h4>
+
+  {% if formatos %}
+    <div class="list-group">
+      {% for formato in formatos %}
+        <div class="list-group-item d-flex justify-content-between align-items-start">
+          <div class="me-auto">
+            <a href="{{ url_for('static', filename='formatos/' + formato.filename) }}"
+               class="text-decoration-none fw-medium text-primary"
+               target="_blank">
+              {{ formato.nombre_original }}
+            </a>
+            <div class="text-muted small">
+              Subido por {{ formato.usuario or "Desconocido" }} el {{ formato.fecha_subida.strftime('%d-%m-%Y') }}
+              {% if formato.observaciones %} – {{ formato.observaciones }}{% endif %}
             </div>
-            <form action="{{ url_for('eliminar_formato', id=formato.id) }}" method="POST">
-              <button class="text-red-500 hover:text-red-700 text-sm">Eliminar</button>
-            </form>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-gray-600">No hay formatos aún.</p>
-    {% endif %}
-  </div>
+          </div>
+          <form action="{{ url_for('eliminar_formato', id=formato.id) }}" method="POST">
+            <button class="btn btn-sm btn-rojo">Eliminar</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No hay formatos aún.</p>
+  {% endif %}
 
 </div>
-
-<style>
-  .bg-judexia {
-    background-color: #1f2a60;
-  }
-</style>
 
 {% endblock %}
 
