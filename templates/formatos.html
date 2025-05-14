@@ -1,80 +1,114 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-6">
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded">
-        {{ messages[0] }}
-    </div>
-    {% endif %}
-    {% endwith %}
 
-    <h2 class="text-2xl font-bold mb-6">Gestión de Formatos Legales</h2>
+<div class="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-md space-y-6">
 
-    <!-- Formulario de filtros -->
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <input type="text" name="nombre" placeholder="Buscar por nombre"
-               value="{{ filtro_nombre }}" class="border border-gray-300 px-3 py-2 rounded w-full">
-        <input type="text" name="usuario" placeholder="Buscar por usuario"
-               value="{{ filtro_usuario }}" class="border border-gray-300 px-3 py-2 rounded w-full">
-        <select name="causa_id" class="border border-gray-300 px-3 py-2 rounded w-full">
-            <option value="">Todas las causas</option>
-            {% for causa in causas %}
-            <option value="{{ causa.id }}" {% if filtro_causa|int == causa.id %}selected{% endif %}>
-                {{ causa.tipo }} - {{ causa.rol }}
-            </option>
-            {% endfor %}
-        </select>
-        <div class="md:col-span-3">
-            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-black transition w-full">
-                Aplicar filtros
+    <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2">📂 Gestión de Formatos Legales</h2>
+
+    <form action="/subir_formato" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Buscar por nombre</label>
+                <select name="buscar_nombre" class="w-full p-2 border rounded bg-gray-50">
+                    <option value="">-- Seleccionar --</option>
+                    {% for nombre in nombres %}
+                        <option value="{{ nombre }}">{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Buscar por usuario</label>
+                <select name="buscar_usuario" class="w-full p-2 border rounded bg-gray-50">
+                    <option value="">-- Seleccionar --</option>
+                    {% for usuario in usuarios %}
+                        <option value="{{ usuario }}">{{ usuario }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Todas las causas</label>
+                <select name="causa" class="w-full p-2 border rounded bg-gray-50">
+                    <option value="">-- Seleccionar --</option>
+                    {% for causa in causas %}
+                        <option value="{{ causa }}">{{ causa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Seleccionar archivo</label>
+                <input type="file" name="archivo" required class="w-full p-2 border rounded bg-white file:bg-judexia file:text-white file:rounded file:px-4 file:py-2 file:cursor-pointer" />
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nombre del usuario</label>
+                <input type="text" name="usuario" required class="w-full p-2 border rounded bg-gray-50" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">(Opcional) Asociar a una causa</label>
+                <select name="asociar_causa" class="w-full p-2 border rounded bg-gray-50">
+                    <option value="">-- Ninguna --</option>
+                    {% for causa in causas %}
+                        <option value="{{ causa }}">{{ causa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Observaciones (opcional)</label>
+            <textarea name="observaciones" rows="2" class="w-full p-2 border rounded bg-gray-50"></textarea>
+        </div>
+
+        <div class="flex justify-end">
+            <button type="submit" class="bg-judexia hover:bg-blue-800 text-white font-semibold py-2 px-6 rounded transition">
+                📤 Subir formato
             </button>
         </div>
     </form>
 
-    <!-- Formulario de subida -->
-    <form method="POST" enctype="multipart/form-data" class="space-y-4 mb-10">
-        <input type="file" name="archivo" required class="border border-gray-300 px-3 py-2 rounded w-full">
-        <input type="text" name="usuario" placeholder="Nombre del usuario" class="border border-gray-300 px-3 py-2 rounded w-full">
-        <select name="causa_id" class="border border-gray-300 px-3 py-2 rounded w-full">
-            <option value="">(Opcional) Asociar a una causa</option>
-            {% for causa in causas %}
-            <option value="{{ causa.id }}">{{ causa.tipo }} - {{ causa.rol }}</option>
-            {% endfor %}
-        </select>
-        <input type="text" name="observaciones" placeholder="Observaciones (opcional)" class="border border-gray-300 px-3 py-2 rounded w-full">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-            Subir formato
-        </button>
-    </form>
+    <hr class="border-t mt-6" />
 
-    <!-- Lista de archivos -->
-    <h3 class="text-xl font-semibold mb-4">Formatos disponibles</h3>
-    <div class="space-y-4">
-        {% for f in formatos %}
-        <div class="bg-white border border-gray-200 shadow-sm rounded p-4 flex justify-between items-center">
-            <div>
-                <strong class="text-base">{{ f.nombre_original }}</strong><br>
-                <span class="text-sm text-gray-600">
-                    Usuario: {{ f.usuario or 'N/D' }} |
-                    Fecha: {{ f.fecha_subida.strftime('%d-%m-%Y') }}
-                    {% if f.causa %}| Causa: {{ f.causa.tipo }} {{ f.causa.rol }}{% endif %}
-                    {% if f.observaciones %}<br>📝 {{ f.observaciones }}{% endif %}
-                </span>
-            </div>
-            <div class="flex gap-3">
-                <a href="{{ url_for('static', filename='formatos/' ~ f.filename) }}" target="_blank"
-                   class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition">Ver</a>
-                <form method="POST" action="{{ url_for('eliminar_formato', id=f.id) }}">
-                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">
-                        Eliminar
-                    </button>
-                </form>
-            </div>
-        </div>
-        {% endfor %}
+    <h3 class="text-xl font-semibold text-gray-800 mt-4">📁 Formatos disponibles</h3>
+    <div id="lista-formatos" class="space-y-2">
+        <!-- Se llenará por JS -->
     </div>
+
 </div>
+
+<script>
+    fetch('/formatos_disponibles')
+        .then(response => response.json())
+        .then(data => {
+            const lista = document.getElementById('lista-formatos');
+            if (data.length === 0) {
+                lista.innerHTML = "<p class='text-gray-500'>No hay formatos cargados.</p>";
+            } else {
+                data.forEach(formato => {
+                    const item = document.createElement('div');
+                    item.className = 'p-3 rounded border flex justify-between items-center bg-gray-50';
+                    item.innerHTML = `
+                        <span class="text-sm text-gray-700 truncate w-2/3">${formato.nombre}</span>
+                        <a href="/${formato.ruta}" download class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm">Descargar</a>
+                    `;
+                    lista.appendChild(item);
+                });
+            }
+        });
+</script>
+
+<style>
+    .bg-judexia {
+        background-color: #1f2a60; /* azul institucional */
+    }
+</style>
+
 {% endblock %}
+
 
 
