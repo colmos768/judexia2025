@@ -54,7 +54,7 @@ class Pago(db.Model):
     fecha = db.Column(db.String(20))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
 
-# Crear tablas automáticamente al arrancar
+# Crear tablas automáticamente
 with app.app_context():
     db.create_all()
 
@@ -175,9 +175,6 @@ def eliminar_ia(nombre):
 @app.route("/servicio")
 def servicio():
     return render_template("servicio.html")
-
-# No se necesita más esta ruta porque las tablas se crean al inicio
-# @app.route("/crear_tablas")
 
 # Ejecutar localmente
 if __name__ == "__main__":
