@@ -309,6 +309,11 @@ def preguntar_ia():
 def servicio():
     return render_template("servicio.html")
 
+@app.route("/formatos_disponibles")
+def formatos_disponibles():
+    archivos = FormatoLegal.query.order_by(FormatoLegal.fecha_subida.desc()).all()
+    return render_template("formatos_disponibles.html", archivos=archivos)
+
 if __name__ == "__main__":
     app.run(debug=True)
 
