@@ -219,9 +219,24 @@ def formatos():
             flash("✅ Formato subido correctamente.")
         return redirect(url_for("formatos"))
 
-    formatos = FormatoLegal.query.order_by(FormatoLegal.fecha_subida.desc()).all()
+    # -------- FILTROS --------
+    nombre = request.args.get("nombre", "")
+    usuario = request.args.get("usuario", "")
+    causa_id = request.args.get("causa_id", "")
+
+    query = FormatoLegal.query
+
+    if nombre:
+        query = query.filter(FormatoLegal.nombre_original.ilike(f"%{nombre}%"))
+    if usuario:
+        query = query.filter(FormatoLegal.usuario.ilike(f"%{usuario}%"))
+    if causa_id:
+        query = query.filter(FormatoLegal.causa_id == int(causa_id))
+
+    formatos = query.order_by(FormatoLegal.fecha_subida.desc()).all()
     causas = Causa.query.all()
-    return render_template("formatos.html", formatos=formatos, causas=causas)
+    return render_template("formatos.html", formatos=formatos, causas=causas,
+                           filtro_nombre=nombre, filtro_usuario=usuario, filtro_causa=causa_id)
 
 @app.route("/formatos/eliminar/<int:id>", methods=["POST"])
 def eliminar_formato(id):
