@@ -29,3 +29,10 @@ class Pago(db.Model):
     monto = db.Column(db.Float, nullable=False)
     fecha = db.Column(db.String(20))  # o db.Date si prefieres
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+
+class FormatoLegal(db.Model):
+    __tablename__ = 'formatos_legales'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    fecha_subida = db.Column(db.DateTime, nullable=False, default=db.func.now())
