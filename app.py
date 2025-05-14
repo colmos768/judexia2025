@@ -372,13 +372,6 @@ def registrar_honorario():
     causas = Causa.query.all()
     return render_template('registrar_honorario.html', clientes=clientes, causas=causas)
 
-@app.route('/facturacion')
-def facturacion():
-    honorarios = Honorario.query.order_by(Honorario.fecha_emision.desc()).all()
-    pagos = PagoCuota.query.order_by(PagoCuota.fecha_pago.desc()).all()
-    clientes = Cliente.query.all()
-    return render_template('facturacion.html', honorarios=honorarios, pagos=pagos, clientes=clientes)
-
 @app.route('/registrar_pago/<int:honorario_id>', methods=['GET', 'POST'])
 def registrar_pago(honorario_id):
     honorario = Honorario.query.get_or_404(honorario_id)
