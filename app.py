@@ -248,6 +248,11 @@ def formatos():
             flash("✅ Formato subido correctamente.")
         return redirect(url_for("formatos"))
 
+    @app.route('/logout')
+def logout():
+    # Aquí puedes borrar la sesión o simplemente redirigir al login
+    return redirect(url_for('login'))
+
     # -------- FILTROS --------
     nombre = request.args.get("nombre", "")
     usuario = request.args.get("usuario", "")
