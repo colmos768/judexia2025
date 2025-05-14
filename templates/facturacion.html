@@ -1,31 +1,135 @@
-{% extends 'base.html' %}
-
-{% block title %}Honorarios - Judexia{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-<h1>Honorarios</h1>
+<div class="container mt-4">
 
-<a href="#" class="btn">Registrar nuevo pago</a>
+  <h2 class="mb-4">📊 Panel de Facturación</h2>
 
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Monto</th>
-            <th>Fecha</th>
-        </tr>
+  <!-- Botones de acción -->
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      <a href="{{ url_for('registrar_honorario') }}" class="btn btn-success">➕ Registrar Honorario</a>
+      <a href="{{ url_for('exportar_facturacion') }}" class="btn btn-secondary">⬇️ Exportar CSV</a>
+    </div>
+  </div>
+
+  <!-- Resumen financiero -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-primary">
+        <div class="card-body">
+          <h5 class="card-title text-primary">💰 Total Facturado</h5>
+          <p class="card-text fw-bold">${{ honorarios|sum(attribute='monto_total')|round(0) }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-success">
+        <div class="card-body">
+          <h5 class="card-title text-success">✅ Total Pagado</h5>
+          <p class="card-text fw-bold">
+            ${{ pagos|sum(attribute='monto_pagado')|round(0) }}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-danger">
+        <div class="card-body">
+          <h5 class="card-title text-danger">⚠️ Cuotas Vencidas</h5>
+          <p class="card-text fw-bold">
+            {{ pagos|selectattr("estado", "equalto", "vencida")|list|length }} cuotas
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de honorarios -->
+  <h4 class="mt-4">📄 Honorarios Emitidos</h4>
+  <table class="table table-striped table-bordered mt-2">
+    <thead class="table-light">
+      <tr>
+        <th>Cliente</th>
+        <th>Causa</th>
+        <th>Descripción</th>
+        <th>Monto</th>
+        <th>Cuotas</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+      </tr>
     </thead>
     <tbody>
-        {% for pago in pagos %}
-        <tr>
-            <td>{{ pago.id }}</td>
-            <td>{{ pago.cliente.nombre }}</td>
-            <td>${{ pago.monto }}</td>
-            <td>{{ pago.fecha }}</td>
-        </tr>
-        {% endfor %}
+      {% for h in honorarios %}
+      <tr>
+        <td>{{ h.cliente.nombre }}</td>
+        <td>{{ h.causa.rol if h.causa else '—' }}</td>
+        <td>{{ h.descripcion }}</td>
+        <td>${{ h.monto_total }}</td>
+        <td>{{ h.numero_cuotas }}</td>
+        <td>{{ h.fecha_emision.strftime('%d-%m-%Y') }}</td>
+        <td>{{ h.estado }}</td>
+      </tr>
+      {% endfor %}
     </tbody>
-</table>
+  </table>
+
+  <!-- Tabla de pagos -->
+  <h4 class="mt-5">💳 Pagos Registrados</h4>
+  <table class="table table-striped table-bordered mt-2">
+    <thead class="table-light">
+      <tr>
+        <th>Cliente</th>
+        <th>Cuota Nº</th>
+        <th>Monto</th>
+        <th>Pagado</th>
+        <th>Vencimiento</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pagos %}
+      <tr>
+        <td>{{ p.honorario.cliente.nombre }}</td>
+        <td>{{ p.numero_cuota }}</td>
+        <td>${{ p.monto_pagado }}</td>
+        <td>{{ p.fecha_pago.strftime('%d-%m-%Y') if p.fecha_pago else '—' }}</td>
+        <td>{{ p.vencimiento.strftime('%d-%m-%Y') if p.vencimiento else '—' }}</td>
+        <td>{{ p.estado }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Espacio para gráfico -->
+  <div class="mt-5">
+    <h4>📈 Gráfico de Pagos</h4>
+    <canvas id="graficoPagos" height="100"></canvas>
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('graficoPagos').getContext('2d');
+  const graficoPagos = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+      datasets: [{
+        label: 'Pagos semanales',
+        data: [150000, 90000, 120000, 70000],  // puedes reemplazar con datos reales
+        borderWidth: 1,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
 {% endblock %}
 
