@@ -46,4 +46,30 @@ class FormatoLegal(db.Model):
     version = db.Column(db.Integer, default=1)
     observaciones = db.Column(db.String(255))
 
+class Honorario(Base):
+    __tablename__ = 'honorarios'
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey('clientes.id'))
+    causa_id = Column(Integer, ForeignKey('causas.id'), nullable=True)  # opcional
+    descripcion = Column(String(255))
+    monto_total = Column(Float)
+    fecha_emision = Column(Date)
+    en_cuotas = Column(Boolean, default=False)
+    numero_cuotas = Column(Integer, default=1)
+    estado = Column(String(50), default="pendiente")  # pendiente / pagado / moroso
 
+    cliente = relationship("Cliente", back_populates="honorarios")
+    causa = relationship("Causa", back_populates="honorarios")
+    pagos = relationship("PagoCuota", back_populates="honorario", cascade="all, delete")
+
+class PagoCuota(Base):
+    __tablename__ = 'pagos_cuotas'
+    id = Column(Integer, primary_key=True)
+    honorario_id = Column(Integer, ForeignKey('honorarios.id'))
+    numero_cuota = Column(Integer)
+    monto_pagado = Column(Float)
+    fecha_pago = Column(Date)
+    vencimiento = Column(Date)
+    estado = Column(String(20), default="pendiente")  # pendiente / pagado / vencida
+
+    honorario = relationship("Honorario", back_populates="pagos")
