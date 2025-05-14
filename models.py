@@ -33,6 +33,16 @@ class Pago(db.Model):
 class FormatoLegal(db.Model):
     __tablename__ = 'formatos_legales'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(255), nullable=False)
-    filename = db.Column(db.String(255), nullable=False)
-    fecha_subida = db.Column(db.DateTime, nullable=False, default=db.func.now())
+    nombre_original = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False, unique=True)
+    fecha_subida = db.Column(db.DateTime, default=db.func.now())
+    
+    usuario = db.Column(db.String(100))  # Opcional: puedes asociarlo a un modelo de Usuario si lo tienes
+
+    # Relación con causa (opcional)
+    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
+    causa = db.relationship('Causa', backref='formatos')
+
+    version = db.Column(db.Integer, default=1)
+    observaciones = db.Column(db.String(255))
+
