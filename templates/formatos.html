@@ -26,7 +26,7 @@
       </select>
     </div>
     <div class="col-12 text-end">
-      <button type="submit" class="btn btn-judexia">
+      <button type="submit" class="btn btn-dark">
         🔍 Aplicar filtros
       </button>
     </div>
@@ -36,7 +36,13 @@
   <form action="{{ url_for('formatos') }}" method="POST" enctype="multipart/form-data" class="row g-3 mb-5">
     <div class="col-md-6">
       <label class="form-label">Seleccionar archivo</label>
-      <input type="file" name="archivo" required class="form-control">
+      <div class="d-flex align-items-center custom-file-input">
+        <label class="custom-file-label">
+          📁 Subir archivo
+          <input type="file" name="archivo" required onchange="mostrarNombre(this)">
+        </label>
+        <span id="nombre-archivo" class="custom-file-filename ms-3">Sin archivo seleccionado</span>
+      </div>
     </div>
     <div class="col-md-6">
       <label class="form-label">Nombre del usuario</label>
@@ -56,14 +62,14 @@
       <input type="text" name="observaciones" class="form-control">
     </div>
     <div class="col-12 text-end">
-      <button type="submit" class="btn btn-verde">
+      <button type="submit" class="btn btn-success">
         📤 Subir formato
       </button>
     </div>
   </form>
 
   <!-- LISTA DE FORMATOS -->
-  <h4 class="fw-semibold mb-3">📁 Formatos disponibles</h4>
+  <h4 class="fw-semibold mb-3">📃 Formatos disponibles</h4>
 
   {% if formatos %}
     <div class="list-group">
@@ -81,7 +87,7 @@
             </div>
           </div>
           <form action="{{ url_for('eliminar_formato', id=formato.id) }}" method="POST">
-            <button class="btn btn-sm btn-rojo">Eliminar</button>
+            <button class="btn btn-sm btn-danger">Eliminar</button>
           </form>
         </div>
       {% endfor %}
@@ -89,11 +95,50 @@
   {% else %}
     <p class="text-muted">No hay formatos aún.</p>
   {% endif %}
-
 </div>
 
+<style>
+  .custom-file-input {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .custom-file-input input[type="file"] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    opacity: 0;
+    outline: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .custom-file-label {
+    background-color: #1a237e;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    display: inline-block;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .custom-file-filename {
+    margin-left: 10px;
+    font-style: italic;
+    color: #555;
+  }
+</style>
+
+<script>
+  function mostrarNombre(input) {
+    const nombre = input.files.length > 0 ? input.files[0].name : 'Sin archivo seleccionado';
+    document.getElementById('nombre-archivo').textContent = nombre;
+  }
+</script>
+
 {% endblock %}
-
-
-
-
