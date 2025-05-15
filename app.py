@@ -501,6 +501,12 @@ def registrar_gasto():
 
     return render_template('registrar_gasto.html', date_today=date.today())
 
+@app.route('/initdb')
+def init_db():
+    from database import db
+    db.create_all()
+    return "Base de datos actualizada correctamente."
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
