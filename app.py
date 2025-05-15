@@ -546,6 +546,19 @@ from flask import request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from models import FormatoLegal  # Asegúrate de importar tu modelo
 
+@app.route("/ajustar_clientes")
+def ajustar_clientes():
+    try:
+        from sqlalchemy import text
+        with app.app_context():
+            db.session.execute(text("ALTER TABLE clientes ADD COLUMN rut_num VARCHAR(8);"))
+            db.session.execute(text("ALTER TABLE clientes ADD COLUMN rut_dv VARCHAR(1);"))
+            db.session.execute(text("ALTER TABLE clientes ADD COLUMN profesion VARCHAR(100);"))
+            db.session.commit()
+        return "✅ Tabla 'clientes' actualizada correctamente."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
