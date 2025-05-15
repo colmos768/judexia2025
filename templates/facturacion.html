@@ -74,57 +74,47 @@
     </div>
   </div>
 
-  <!-- Tabla de honorarios -->
-  <h4 class="mt-4">📄 Honorarios Emitidos</h4>
+  <!-- Panel de Balance y Gastos -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-dark">
+        <div class="card-body">
+          <h5 class="card-title text-dark">📉 Total Gastos</h5>
+          <p class="card-text fw-bold">${{ total_gastos | round(0) }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-info">
+        <div class="card-body">
+          <h5 class="card-title text-info">📊 Balance Neto</h5>
+          <p class="card-text fw-bold">${{ balance | round(0) }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <a href="{{ url_for('registrar_gasto') }}" class="btn btn-outline-danger mt-4 w-100">➖ Registrar Gasto</a>
+    </div>
+  </div>
+
+  <!-- Tabla de gastos -->
+  <h4 class="mt-5">📌 Gastos Registrados</h4>
   <table class="table table-striped table-bordered mt-2">
     <thead class="table-light">
       <tr>
-        <th>Cliente</th>
-        <th>Causa</th>
         <th>Descripción</th>
         <th>Monto</th>
-        <th>Cuotas</th>
+        <th>Categoría</th>
         <th>Fecha</th>
-        <th>Estado</th>
       </tr>
     </thead>
     <tbody>
-      {% for h in honorarios %}
+      {% for g in gastos %}
       <tr>
-        <td>{{ h.cliente.nombre }}</td>
-        <td>{{ h.causa.rol if h.causa else '—' }}</td>
-        <td>{{ h.descripcion }}</td>
-        <td>${{ h.monto_total }}</td>
-        <td>{{ h.numero_cuotas }}</td>
-        <td>{{ h.fecha_emision.strftime('%d-%m-%Y') }}</td>
-        <td>{{ h.estado }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <!-- Tabla de pagos -->
-  <h4 class="mt-5">💳 Pagos Registrados</h4>
-  <table class="table table-striped table-bordered mt-2">
-    <thead class="table-light">
-      <tr>
-        <th>Cliente</th>
-        <th>Cuota Nº</th>
-        <th>Monto</th>
-        <th>Pagado</th>
-        <th>Vencimiento</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in pagos %}
-      <tr>
-        <td>{{ p.honorario.cliente.nombre }}</td>
-        <td>{{ p.numero_cuota }}</td>
-        <td>${{ p.monto_pagado }}</td>
-        <td>{{ p.fecha_pago.strftime('%d-%m-%Y') if p.fecha_pago else '—' }}</td>
-        <td>{{ p.vencimiento.strftime('%d-%m-%Y') if p.vencimiento else '—' }}</td>
-        <td>{{ p.estado }}</td>
+        <td>{{ g.descripcion }}</td>
+        <td>${{ g.monto }}</td>
+        <td>{{ g.categoria or '—' }}</td>
+        <td>{{ g.fecha.strftime('%d-%m-%Y') }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -132,7 +122,7 @@
 
   <!-- Gráfico lineal de prueba -->
   <div class="mt-5">
-    <h4>📈 Ingresos y Clientes Nuevos</h4>
+    <h4>📈 Ingresos, Clientes y Gastos</h4>
     <canvas id="graficoFacturacion" height="100"></canvas>
   </div>
 
@@ -162,6 +152,14 @@
           backgroundColor: 'rgba(0,0,255,0.1)',
           fill: true,
           tension: 0.3
+        },
+        {
+          label: 'Gastos',
+          data: [200000, 180000, 250000, 300000, 210000, 220000, 230000, 200000, 190000, 250000, 240000, 260000],
+          borderColor: 'red',
+          backgroundColor: 'rgba(255,0,0,0.1)',
+          fill: true,
+          tension: 0.3
         }
       ]
     },
@@ -174,5 +172,6 @@
   });
 </script>
 {% endblock %}
+
 
 
