@@ -2,12 +2,10 @@
 {% block content %}
 <h2>Registrar nueva causa</h2>
 
-<form method="POST" action="{{ url_for('registrar_causa') }}" enctype="multipart/form-data">
-    <!-- Tipo de causa -->
+<form method="POST" action="{{ url_for('causas') }}" enctype="multipart/form-data">
     <label>Tipo de causa:</label>
     <input type="text" name="tipo_causa" required><br>
 
-    <!-- Procedimiento -->
     <label>Procedimiento:</label>
     <select name="procedimiento" required>
         <option value="Ordinario">Ordinario</option>
@@ -16,14 +14,12 @@
         <option value="Sumario">Sumario</option>
     </select><br>
 
-    <!-- Judicial o extrajudicial -->
     <label>¿Es judicial?</label>
     <select id="judicial" name="judicial" onchange="toggleJudicialCampos()" required>
         <option value="True" selected>Judicial</option>
         <option value="False">Extrajudicial</option>
     </select><br>
 
-    <!-- Campos solo si es judicial -->
     <div id="campos_judiciales">
         <label>Corte de Apelaciones:</label>
         <select name="corte_apelaciones">
@@ -32,7 +28,6 @@
             <option value="Rancagua">Rancagua</option>
             <option value="Valparaíso">Valparaíso</option>
             <option value="Temuco">Temuco</option>
-            <!-- Agrega todas las jurisdicciones aquí -->
         </select><br>
 
         <label>Tribunal:</label>
@@ -40,7 +35,6 @@
             <option value="">-- Seleccione un tribunal --</option>
             <option value="1° Juzgado Civil de Santiago">1° Juzgado Civil de Santiago</option>
             <option value="Juzgado de Familia de Peñaflor">Juzgado de Familia de Peñaflor</option>
-            <!-- Puedes cargar esta lista dinámicamente más adelante -->
         </select><br>
 
         <label>Letra del Rol:</label>
@@ -57,38 +51,24 @@
         <input type="number" name="rol_anio" min="2000" max="2100"><br>
     </div>
 
-    <!-- Cliente relacionado -->
     <label>Cliente:</label>
     <select name="cliente_id" required>
         {% for cliente in clientes %}
-        <option value="{{ cliente.id }}">{{ cliente.nombre_completo }}</option>
+        <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
         {% endfor %}
     </select><br>
 
-    <!-- Contraparte (opcional) -->
-    <label>Contraparte:</label>
-    <select name="contraparte_id">
-        <option value="">-- Ninguna --</option>
-        {% for c in contrapartes %}
-        <option value="{{ c.id }}">{{ c.nombre_completo }}</option>
-        {% endfor %}
-    </select><br>
-
-    <!-- Fecha de ingreso -->
     <label>Fecha de ingreso:</label>
     <input type="date" name="fecha_ingreso" required><br>
 
-    <!-- Última gestión -->
     <label>Última gestión (opcional):</label>
     <textarea name="ultima_gestion"></textarea><br>
     <label>Fecha última gestión:</label>
     <input type="date" name="fecha_ultima_gestion"><br>
 
-    <!-- Ingreso jurídico -->
     <label>Ingreso jurídico:</label>
     <textarea name="ingreso_juridico" required></textarea><br>
 
-    <!-- Documentos adjuntos -->
     <label>Prueba habilitante (múltiple):</label>
     <input type="file" name="documentos" multiple><br><br>
 
@@ -99,11 +79,7 @@
 function toggleJudicialCampos() {
     const select = document.getElementById("judicial");
     const campos = document.getElementById("campos_judiciales");
-    if (select.value === "True") {
-        campos.style.display = "block";
-    } else {
-        campos.style.display = "none";
-    }
+    campos.style.display = select.value === "True" ? "block" : "none";
 }
 window.onload = toggleJudicialCampos;
 </script>
