@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>➖ Registrar Gasto</h2>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="descripcion" class="form-label">Descripción del gasto</label>
+      <input type="text" name="descripcion" id="descripcion" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="monto" class="form-label">Monto</label>
+      <input type="number" name="monto" id="monto" class="form-control" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="categoria" class="form-label">Categoría (opcional)</label>
+      <input type="text" name="categoria" id="categoria" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label for="fecha" class="form-label">Fecha</label>
+      <input type="date" name="fecha" id="fecha" class="form-control" value="{{ date_today }}">
+    </div>
+
+    <button type="submit" class="btn btn-danger">Guardar Gasto</button>
+    <a href="{{ url_for('facturacion') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
