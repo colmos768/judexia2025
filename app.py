@@ -214,32 +214,20 @@ def clientes():
 
 @app.route("/registrar_cliente", methods=["POST"])
 def registrar_cliente():
-    try:
-        data = request.form
-
-        # Validar que los campos obligatorios estén presentes
-        if not data["nombre"] or not data["rut"]:
-            flash("Nombre y RUT son obligatorios.")
-            return redirect(url_for("clientes"))
-
-        fecha_nac = None
-        if data["fecha_nacimiento"]:
-            fecha_nac = datetime.strptime(data["fecha_nacimiento"], "%Y-%m-%d")
-
-        nuevo = Cliente(
-            nombre=data["nombre"],
-            rut=data["rut"],
-            email=data.get("email"),
-            telefono=data.get("telefono"),
-            direccion=data.get("direccion"),
-            fecha_nacimiento=fecha_nac
-        )
-        db.session.add(nuevo)
-        db.session.commit()
-        flash("Cliente registrado correctamente.")
-    except Exception as e:
-        flash(f"Error al registrar cliente: {str(e)}")
-
+    data = request.form
+    nuevo = Cliente(
+        nombre=data["nombre"],
+        rut_num=data["rut_num"],
+        rut_dv=data["rut_dv"],
+        email=data.get("email"),
+        telefono=data.get("telefono"),
+        direccion=data.get("direccion"),
+        profesion=data.get("profesion"),
+        fecha_nacimiento=datetime.strptime(data["fecha_nacimiento"], "%Y-%m-%d")
+    )
+    db.session.add(nuevo)
+    db.session.commit()
+    flash("Cliente registrado correctamente.")
     return redirect(url_for("clientes"))
 
 @app.route("/causas", methods=["GET", "POST"])
