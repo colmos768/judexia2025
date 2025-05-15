@@ -420,3 +420,43 @@ if __name__ == '__main__':
 
 
 
+
+class Gasto(db.Model):
+    __tablename__ = 'gastos'
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.Date, default=date.today)
+    categoria = db.Column(db.String(100))
+
+
+@app.route('/registrar_gasto', methods=['GET', 'POST'])
+def registrar_gasto():
+    if request.method == 'POST':
+        data = request.form
+        nuevo_gasto = Gasto(
+            descripcion=data['descripcion'],
+            monto=float(data['monto']),
+            fecha=data.get('fecha') or date.today(),
+            categoria=data.get('categoria')
+        )
+        db.session.add(nuevo_gasto)
+        db.session.commit()
+        return redirect(url_for('facturacion'))
+
+    return render_template('registrar_gasto.html', date_today=date.today())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
