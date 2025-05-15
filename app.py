@@ -207,6 +207,11 @@ def dashboard():
 
 from flask import flash
 
+@app.route("/clientes")
+def clientes():
+    lista = Cliente.query.all()
+    return render_template("clientes.html", clientes=lista)
+
 @app.route("/registrar_cliente", methods=["POST"])
 def registrar_cliente():
     try:
