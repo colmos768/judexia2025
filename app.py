@@ -356,47 +356,33 @@ def preguntar_ia():
     archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
     return render_template("ia.html", archivos=archivos, respuesta=respuesta)
 
-@app.route("/formatos", methods=["GET", "POST"])
+@app.route("/formatos", methods=["GET"])
 def formatos():
-    if request.method == "POST":
-        archivo = request.files["archivo"]
-        usuario = request.form.get("usuario", "Desconocido")
-        causa_id = request.form.get("causa_id") or None
-        observaciones = request.form.get("observaciones") or ""
-
-        if archivo:
-            nombre_original = archivo.filename
-            nombre_unico = f"{uuid.uuid4().hex}_{nombre_original}"
-            ruta = os.path.join("static", "formatos", nombre_unico)
-            archivo.save(ruta)
-
-            nuevo_formato = FormatoLegal(
-                nombre_original=nombre_original,
-                filename=nombre_unico,
-                usuario=usuario,
-                causa_id=causa_id,
-                observaciones=observaciones
-            )
-            db.session.add(nuevo_formato)
-            db.session.commit()
-            flash("✅ Formato subido correctamente.")
-        return redirect(url_for("formatos"))
-
-    nombre = request.args.get("nombre", "")
-    usuario = request.args.get("usuario", "")
-    causa_id = request.args.get("causa_id", "")
+    filtro_nombre = request.args.get("nombre", "").strip()
+    filtro_usuario = request.args.get("usuario", "").strip()
+    filtro_causa = request.args.get("causa_id", "").strip()
 
     query = FormatoLegal.query
-    if nombre:
-        query = query.filter(FormatoLegal.nombre_original.ilike(f"%{nombre}%"))
-    if usuario:
-        query = query.filter(FormatoLegal.usuario.ilike(f"%{usuario}%"))
-    if causa_id:
-        query = query.filter(FormatoLegal.causa_id == int(causa_id))
+
+    if filtro_nombre:
+        query = query.filter(FormatoLegal.nombre_original.ilike(f"%{filtro_nombre}%"))
+    if filtro_usuario:
+        query = query.filter(FormatoLegal.usuario.ilike(f"%{filtro_usuario}%"))
+    if filtro_causa:
+        query = query.filter(FormatoLegal.causa_id == int(filtro_causa))
 
     formatos = query.order_by(FormatoLegal.fecha_subida.desc()).all()
-    causas = Causa.query.all()
-    return render_template("formatos.html", **locals())
+
+    causas = Causa.query.order_by(Causa.id.desc()).all()  # Para el select
+
+    return render_template(
+        "formatos.html",
+        formatos=formatos,
+        causas=causas,
+        filtro_nombre=filtro_nombre,
+        filtro_usuario=filtro_usuario,
+        filtro_causa=filtro_causa
+    )
 
 @app.route("/formatos/eliminar/<int:id>", methods=["POST"])
 def eliminar_formato(id):
