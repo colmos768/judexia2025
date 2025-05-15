@@ -18,6 +18,7 @@ app.secret_key = 'clave_secreta_para_flash'
 # Crear carpetas necesarias
 os.makedirs("static/ia", exist_ok=True)
 os.makedirs("static/formatos", exist_ok=True)
+os.makedirs("static/documentos", exist_ok=True)
 
 # Configurar API KEY de OpenAI
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -35,9 +36,11 @@ elif "?" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
+
+# ========== BASE DE DATOS ==========
 db = SQLAlchemy(app)
 
-# ========== MODELOS ==========
 class Cliente(db.Model):
     __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
@@ -53,11 +56,29 @@ class Cliente(db.Model):
 class Causa(db.Model):
     __tablename__ = 'causas'
     id = db.Column(db.Integer, primary_key=True)
-    tipo = db.Column(db.String(50))
-    rol = db.Column(db.String(20))
-    tribunal = db.Column(db.String(100))
+    tipo_causa = db.Column(db.String(100), nullable=False)
+    procedimiento = db.Column(db.String(100), nullable=False)
+    judicial = db.Column(db.Boolean, default=True)
+    corte_apelaciones = db.Column(db.String(100), nullable=True)
+    tribunal = db.Column(db.String(150), nullable=True)
+    letra = db.Column(db.String(1), nullable=True)
+    rol_numero = db.Column(db.String(10), nullable=True)
+    rol_anio = db.Column(db.Integer, nullable=True)
+    fecha_ingreso = db.Column(db.Date, nullable=False)
+    ultima_gestion = db.Column(db.String(250), nullable=True)
+    fecha_ultima_gestion = db.Column(db.Date, nullable=True)
+    ingreso_juridico = db.Column(db.Text, nullable=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    documentos = db.relationship('Documento', backref='causa', lazy=True)
     formatos = db.relationship('FormatoLegal', backref='causa', lazy=True)
+
+class Documento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'), nullable=False)
+    nombre_archivo = db.Column(db.String(200), nullable=False)
+    ruta_archivo = db.Column(db.String(300), nullable=False)
+    tipo = db.Column(db.String(100), nullable=True)
+    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
 
 class FormatoLegal(db.Model):
     __tablename__ = 'formatos_legales'
@@ -196,24 +217,119 @@ def registrar_cliente():
     db.session.commit()
     return redirect(url_for("clientes"))
 
-@app.route("/causas")
-def causas():
-    causas = Causa.query.all()
-    clientes = Cliente.query.all()
-    return render_template("causas.html", causas=causas, clientes=clientes)
+from werkzeug.utils import secure_filename
 
-@app.route("/registrar_causa", methods=["POST"])
-def registrar_causa():
-    data = request.form
-    nueva = Causa(
-        tipo=data["tipo"],
-        rol=data["rol"],
-        tribunal=data["tribunal"],
-        cliente_id=int(data["cliente_id"])
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'docx', 'txt', 'jpg', 'png'}
+
+@app.route("/causas", methods=["GET", "POST"])
+def causas():
+    if request.method == "POST":
+        form = request.form
+        judicial = form.get("judicial") == "True"
+
+        nueva = Causa(
+            tipo_causa=form["tipo_causa"],
+            procedimiento=form["procedimiento"],
+            judicial=judicial,
+            corte_apelaciones=form.get("corte_apelaciones") if judicial else None,
+            tribunal=form.get("tribunal") if judicial else None,
+            letra=form.get("letra") if judicial else None,
+            rol_numero=form.get("rol_numero") if judicial else None,
+            rol_anio=form.get("rol_anio") if judicial else None,
+            fecha_ingreso=form.get("fecha_ingreso") or date.today(),
+            ultima_gestion=form.get("ultima_gestion"),
+            fecha_ultima_gestion=form.get("fecha_ultima_gestion") or None,
+            ingreso_juridico=form["ingreso_juridico"],
+            cliente_id=form["cliente_id"]
+        )
+        db.session.add(nueva)
+        db.session.commit()
+
+        archivos = request.files.getlist("documentos")
+        for archivo in archivos:
+            if archivo and allowed_file(archivo.filename):
+                nombre = secure_filename(f"{uuid.uuid4().hex}_{archivo.filename}")
+                ruta = os.path.join(app.config['UPLOAD_FOLDER'], nombre)
+                archivo.save(ruta)
+
+                doc = Documento(
+                    causa_id=nueva.id,
+                    nombre_archivo=archivo.filename,
+                    ruta_archivo=ruta
+                )
+                db.session.add(doc)
+
+        db.session.commit()
+        flash("✅ Causa registrada correctamente.")
+        return redirect(url_for("causas"))
+
+    causas = Causa.query.order_by(Causa.fecha_ingreso.desc()).all()
+    clientes = Cliente.query.all()
+    return render_template("registro_causa.html", causas=causas, clientes=clientes)
+
+@app.route("/ia")
+def ia():
+    archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
+    return render_template("ia.html", archivos=archivos)
+
+@app.route("/subir_ia", methods=["POST"])
+def subir_ia():
+    archivo = request.files["archivo"]
+    if archivo:
+        ruta = os.path.join("static/ia", archivo.filename)
+        archivo.save(ruta)
+        flash("✅ Archivo IA subido exitosamente.")
+    return redirect(url_for("ia"))
+
+@app.route("/eliminar_ia/<nombre>")
+def eliminar_ia(nombre):
+    ruta = os.path.join("static/ia", nombre)
+    if os.path.exists(ruta):
+        os.remove(ruta)
+        flash("🗑️ Archivo IA eliminado correctamente.")
+    return redirect(url_for("ia"))
+
+@app.route("/preguntar_ia", methods=["POST"])
+def preguntar_ia():
+    from flask import jsonify
+    pregunta = request.form["pregunta"]
+    
+    archivos = sorted(
+        [f for f in os.listdir("static/ia") if f.endswith((".pdf", ".docx", ".txt"))],
+        key=lambda f: os.path.getmtime(os.path.join("static/ia", f)),
+        reverse=True
     )
-    db.session.add(nueva)
-    db.session.commit()
-    return redirect(url_for("causas"))
+    
+    if not archivos:
+        flash("⚠️ No hay archivos para consultar.")
+        return redirect(url_for("ia"))
+
+    try:
+        texto = extraer_texto(os.path.join("static/ia", archivos[0]))
+        chunks = dividir_en_chunks(texto)
+        chunks = chunks[:30]
+
+        embeddings = [obtener_embedding(c) for c in chunks]
+        pregunta_embedding = obtener_embedding(pregunta)
+
+        top_chunk = chunks[np.argmax([similitud_coseno(e, pregunta_embedding) for e in embeddings])]
+
+        respuesta = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
+                {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
+            ]
+        )["choices"][0]["message"]["content"]
+
+    except Exception as e:
+        flash("❌ Error al procesar la pregunta. Intenta nuevamente más tarde.")
+        print("ERROR en /preguntar_ia:", e)
+        return redirect(url_for("ia"))
+
+    archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
+    return render_template("ia.html", archivos=archivos, respuesta=respuesta)
 
 @app.route("/formatos", methods=["GET", "POST"])
 def formatos():
@@ -268,69 +384,6 @@ def eliminar_formato(id):
         db.session.commit()
         flash("🗑️ Formato eliminado correctamente.")
     return redirect(url_for("formatos"))
-
-@app.route("/ia")
-def ia():
-    archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
-    return render_template("ia.html", archivos=archivos)
-
-@app.route("/subir_ia", methods=["POST"])
-def subir_ia():
-    archivo = request.files["archivo"]
-    if archivo:
-        ruta = os.path.join("static/ia", archivo.filename)
-        archivo.save(ruta)
-        flash("✅ Archivo IA subido exitosamente.")
-    return redirect(url_for("ia"))
-
-@app.route("/eliminar_ia/<nombre>")
-def eliminar_ia(nombre):
-    ruta = os.path.join("static/ia", nombre)
-    if os.path.exists(ruta):
-        os.remove(ruta)
-        flash("🗑️ Archivo IA eliminado correctamente.")
-    return redirect(url_for("ia"))
-
-@app.route("/preguntar_ia", methods=["POST"])
-def preguntar_ia():
-    from flask import jsonify
-    pregunta = request.form["pregunta"]
-    
-    archivos = sorted(
-        [f for f in os.listdir("static/ia") if f.endswith((".pdf", ".docx", ".txt"))],
-        key=lambda f: os.path.getmtime(os.path.join("static/ia", f)),
-        reverse=True
-    )
-    
-    if not archivos:
-        flash("⚠️ No hay archivos para consultar.")
-        return redirect(url_for("ia"))
-
-    try:
-        texto = extraer_texto(os.path.join("static/ia", archivos[0]))
-        chunks = dividir_en_chunks(texto)
-        chunks = chunks[:30]  # limitar a 30 chunks
-
-        embeddings = [obtener_embedding(c) for c in chunks]
-        pregunta_embedding = obtener_embedding(pregunta)
-
-        top_chunk = chunks[np.argmax([similitud_coseno(e, pregunta_embedding) for e in embeddings])]
-
-        respuesta = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
-                {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
-            ]
-        )["choices"][0]["message"]["content"]
-
-    except Exception as e:
-        flash("❌ Error al procesar la pregunta. Intenta nuevamente más tarde.")
-        print("ERROR en /preguntar_ia:", e)
-        return redirect(url_for("ia"))
-
-    archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
-    return render_template("ia.html", archivos=archivos, respuesta=respuesta)
 
 @app.route("/facturacion", methods=["GET", "POST"])
 def facturacion():
@@ -405,7 +458,7 @@ def exportar_facturacion():
     for h in honorarios:
         cw.writerow([
             h.cliente_id,
-            h.causa.rol if h.causa else 'Sin causa',
+            h.causa.rol_numero if h.causa else 'Sin causa',
             h.descripcion,
             h.monto_total,
             h.fecha_emision,
@@ -442,13 +495,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
-
-
-
-
-
-
 
 
 
