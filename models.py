@@ -4,17 +4,16 @@ from datetime import datetime, date
 db = SQLAlchemy()
 
 class Cliente(db.Model):
+    __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
-    nombre_completo = db.Column(db.String(150), nullable=False)
-    rut_num = db.Column(db.String(8), nullable=False)      # Solo números
-    rut_dv = db.Column(db.String(1), nullable=False)        # Dígito verificador
-    correo = db.Column(db.String(120), nullable=True)
-    telefono = db.Column(db.String(20), nullable=True)
-    direccion = db.Column(db.String(200), nullable=False)
-    profesion = db.Column(db.String(100), nullable=False)
-    fecha_nacimiento = db.Column(db.Date, nullable=True)
-
-    causas = db.relationship('Causa', backref='cliente', lazy=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    rut_num = db.Column(db.String(8), nullable=False)  # Solo números
+    rut_dv = db.Column(db.String(1), nullable=False)    # Dígito verificador
+    email = db.Column(db.String(100))
+    telefono = db.Column(db.String(20))
+    direccion = db.Column(db.String(200))
+    profesion = db.Column(db.String(100))
+    fecha_nacimiento = db.Column(db.Date)
 
 class Causa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
