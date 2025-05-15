@@ -224,49 +224,54 @@ def allowed_file(filename):
 
 @app.route("/causas", methods=["GET", "POST"])
 def causas():
-    if request.method == "POST":
-        form = request.form
-        judicial = form.get("judicial") == "True"
+    from werkzeug.utils import secure_filename
 
-        nueva = Causa(
-            tipo_causa=form["tipo_causa"],
-            procedimiento=form["procedimiento"],
-            judicial=judicial,
-            corte_apelaciones=form.get("corte_apelaciones") if judicial else None,
-            tribunal=form.get("tribunal") if judicial else None,
-            letra=form.get("letra") if judicial else None,
-            rol_numero=form.get("rol_numero") if judicial else None,
-            rol_anio=form.get("rol_anio") if judicial else None,
-            fecha_ingreso=form.get("fecha_ingreso") or date.today(),
-            ultima_gestion=form.get("ultima_gestion"),
-            fecha_ultima_gestion=form.get("fecha_ultima_gestion") or None,
-            ingreso_juridico=form["ingreso_juridico"],
-            cliente_id=form["cliente_id"]
+    if request.method == "POST":
+        data = request.form
+
+        nueva_causa = Causa(
+            tipo_causa=data["tipo_causa"],
+            procedimiento=data["procedimiento"],
+            judicial=data["judicial"] == "True",
+            corte_apelaciones=data.get("corte_apelaciones"),
+            tribunal=data.get("tribunal"),
+            letra=data.get("letra"),
+            rol_numero=data.get("rol_numero"),
+            rol_anio=int(data.get("rol_anio") or 0),
+            fecha_ingreso=data.get("fecha_ingreso"),
+            ultima_gestion=data.get("ultima_gestion"),
+            fecha_ultima_gestion=data.get("fecha_ultima_gestion") or None,
+            ingreso_juridico=data.get("ingreso_juridico"),
+            cliente_id=int(data["cliente_id"]),
+            contraparte_id=int(data["contraparte_id"]) if data.get("contraparte_id") else None
         )
-        db.session.add(nueva)
+
+        db.session.add(nueva_causa)
         db.session.commit()
 
         archivos = request.files.getlist("documentos")
         for archivo in archivos:
-            if archivo and allowed_file(archivo.filename):
-                nombre = secure_filename(f"{uuid.uuid4().hex}_{archivo.filename}")
-                ruta = os.path.join(app.config['UPLOAD_FOLDER'], nombre)
+            if archivo.filename != "":
+                filename = secure_filename(archivo.filename)
+                ruta = os.path.join("static", "documentos", filename)
                 archivo.save(ruta)
-
-                doc = Documento(
-                    causa_id=nueva.id,
+                nuevo_doc = Documento(
+                    causa_id=nueva_causa.id,
                     nombre_archivo=archivo.filename,
-                    ruta_archivo=ruta
+                    ruta_archivo=ruta,
+                    tipo="prueba habilitante"
                 )
-                db.session.add(doc)
+                db.session.add(nuevo_doc)
 
         db.session.commit()
         flash("✅ Causa registrada correctamente.")
         return redirect(url_for("causas"))
 
-    causas = Causa.query.order_by(Causa.fecha_ingreso.desc()).all()
+    # GET
+    causas = Causa.query.all()
     clientes = Cliente.query.all()
-    return render_template("registro_causa.html", causas=causas, clientes=clientes)
+    contrapartes = Contraparte.query.all()
+    return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contrapartes)
 
 @app.route("/ia")
 def ia():
