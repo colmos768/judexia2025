@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-
   <h2 class="mb-4">📊 Panel de Facturación</h2>
 
   <!-- Filtros -->
   <form method="get" action="{{ url_for('facturacion') }}" class="row g-3 align-items-end mb-4">
     <div class="col-md-4">
       <label for="cliente_id" class="form-label">Filtrar por cliente</label>
-      <select name="cliente_id" id="cliente_id" class="form-select">
+      <select id="cliente_id" name="cliente_id" class="form-select">
         <option value="">Todos</option>
         {% for cliente in clientes %}
           <option value="{{ cliente.id }}" {% if selected_cliente == cliente.id|string %}selected{% endif %}>
@@ -20,7 +19,7 @@
 
     <div class="col-md-4">
       <label for="estado" class="form-label">Filtrar por estado de pago</label>
-      <select name="estado" id="estado" class="form-select">
+      <select id="estado" name="estado" class="form-select">
         <option value="">Todos</option>
         <option value="pendiente" {% if selected_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
         <option value="pagado" {% if selected_estado == 'pagado' %}selected{% endif %}>Pagado</option>
@@ -29,16 +28,16 @@
     </div>
 
     <div class="col-md-4 d-flex gap-2">
-      <button type="submit" class="btn btn-primary">Aplicar filtros</button>
-      <a href="{{ url_for('facturacion') }}" class="btn btn-secondary">Limpiar</a>
+      <button type="submit" class="btn btn-primary w-50">Aplicar filtros</button>
+      <a href="{{ url_for('facturacion') }}" class="btn btn-secondary w-50">Limpiar</a>
     </div>
   </form>
 
   <!-- Botones de acción -->
   <div class="d-flex justify-content-between mb-3">
     <div>
-      <a href="{{ url_for('registrar_honorario') }}" class="btn btn-success">➕ Registrar Honorario</a>
-      <a href="{{ url_for('exportar_facturacion') }}" class="btn btn-secondary">⬇️ Exportar CSV</a>
+      <a href="{{ url_for('registrar_honorario') }}" class="btn btn-success me-2">➕ Registrar Honorario</a>
+      <a href="{{ url_for('exportar_facturacion') }}" class="btn btn-outline-secondary">⬇️ Exportar CSV</a>
     </div>
   </div>
 
@@ -74,7 +73,7 @@
     </div>
   </div>
 
-  <!-- Panel de Balance y Gastos -->
+  <!-- Balance y botón de gasto -->
   <div class="row mb-4">
     <div class="col-md-4">
       <div class="card border-dark">
@@ -92,87 +91,84 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <a href="{{ url_for('registrar_gasto') }}" class="btn btn-outline-danger mt-4 w-100">➖ Registrar Gasto</a>
+    <div class="col-md-4 d-grid align-items-end">
+      <a href="{{ url_for('registrar_gasto') }}" class="btn btn-outline-danger mt-2">➖ Registrar Gasto</a>
     </div>
   </div>
 
   <!-- Tabla de gastos -->
   <h4 class="mt-5">📌 Gastos Registrados</h4>
-  <table class="table table-striped table-bordered mt-2">
-    <thead class="table-light">
-      <tr>
-        <th>Descripción</th>
-        <th>Monto</th>
-        <th>Categoría</th>
-        <th>Fecha</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for g in gastos %}
-      <tr>
-        <td>{{ g.descripcion }}</td>
-        <td>${{ g.monto }}</td>
-        <td>{{ g.categoria or '—' }}</td>
-        <td>{{ g.fecha.strftime('%d-%m-%Y') }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <!-- Gráfico lineal de prueba -->
-  <div class="mt-5">
-    <h4>📈 Ingresos, Clientes y Gastos</h4>
-    <canvas id="graficoFacturacion" height="100"></canvas>
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered mt-2">
+      <thead class="table-light">
+        <tr>
+          <th>Descripción</th>
+          <th>Monto</th>
+          <th>Categoría</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in gastos %}
+        <tr>
+          <td>{{ g.descripcion }}</td>
+          <td>${{ g.monto }}</td>
+          <td>{{ g.categoria or '—' }}</td>
+          <td>{{ g.fecha.strftime('%d-%m-%Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
+  <!-- Gráfico -->
+  <h4 class="mt-5">📈 Ingresos, Clientes y Gastos</h4>
+  <canvas id="graficoFacturacion" height="100"></canvas>
 </div>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const ctx = document.getElementById('graficoFacturacion').getContext('2d');
-  const graficoFacturacion = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-      datasets: [
-        {
-          label: 'Ingresos',
-          data: [1200000, 980000, 1100000, 1250000, 900000, 1050000, 950000, 1100000, 1200000, 1000000, 1150000, 1300000],
-          borderColor: 'green',
-          backgroundColor: 'rgba(0,128,0,0.1)',
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'Clientes Nuevos',
-          data: [4, 6, 5, 7, 3, 4, 5, 6, 7, 4, 5, 6],
-          borderColor: 'blue',
-          backgroundColor: 'rgba(0,0,255,0.1)',
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'Gastos',
-          data: [200000, 180000, 250000, 300000, 210000, 220000, 230000, 200000, 190000, 250000, 240000, 260000],
-          borderColor: 'red',
-          backgroundColor: 'rgba(255,0,0,0.1)',
-          fill: true,
-          tension: 0.3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
+const ctx = document.getElementById('graficoFacturacion').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    datasets: [
+      {
+        label: 'Ingresos',
+        data: [1200000, 980000, 1100000, 1250000, 900000, 1050000, 950000, 1100000, 1200000, 1000000, 1150000, 1300000],
+        borderColor: 'green',
+        backgroundColor: 'rgba(0,128,0,0.1)',
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: 'Clientes Nuevos',
+        data: [4, 6, 5, 7, 3, 4, 5, 6, 7, 4, 5, 6],
+        borderColor: 'blue',
+        backgroundColor: 'rgba(0,0,255,0.1)',
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: 'Gastos',
+        data: [200000, 180000, 250000, 300000, 210000, 220000, 230000, 200000, 190000, 250000, 240000, 260000],
+        borderColor: 'red',
+        backgroundColor: 'rgba(255,0,0,0.1)',
+        fill: true,
+        tension: 0.3
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true
       }
     }
-  });
+  }
+});
 </script>
 {% endblock %}
-
-
-
-
