@@ -48,7 +48,7 @@
       <div class="card border-primary">
         <div class="card-body">
           <h5 class="card-title text-primary">💰 Total Facturado</h5>
-          <p class="card-text fw-bold">${{ honorarios|sum(attribute='monto_total')|round(0) }}</p>
+          <p class="card-text fw-bold">${{ honorarios | sum(attribute='monto_total') | default(0) | round(0) }}</p>
         </div>
       </div>
     </div>
@@ -57,7 +57,7 @@
         <div class="card-body">
           <h5 class="card-title text-success">✅ Total Pagado</h5>
           <p class="card-text fw-bold">
-            ${{ pagos|sum(attribute='monto_pagado')|round(0) }}
+            ${{ pagos | sum(attribute='monto_pagado') | default(0) | round(0) }}
           </p>
         </div>
       </div>
@@ -67,7 +67,7 @@
         <div class="card-body">
           <h5 class="card-title text-danger">⚠️ Cuotas Vencidas</h5>
           <p class="card-text fw-bold">
-            {{ pagos|selectattr("estado", "equalto", "vencida")|list|length }} cuotas
+            {{ pagos | selectattr("estado", "equalto", "vencida") | list | length }} cuotas
           </p>
         </div>
       </div>
@@ -80,7 +80,7 @@
       <div class="card border-dark">
         <div class="card-body">
           <h5 class="card-title text-dark">📉 Total Gastos</h5>
-          <p class="card-text fw-bold">${{ total_gastos | round(0) }}</p>
+          <p class="card-text fw-bold">${{ total_gastos | default(0) | round(0) }}</p>
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@
       <div class="card border-info">
         <div class="card-body">
           <h5 class="card-title text-info">📊 Balance Neto</h5>
-          <p class="card-text fw-bold">${{ balance | round(0) }}</p>
+          <p class="card-text fw-bold">${{ balance | default(0) | round(0) }}</p>
         </div>
       </div>
     </div>
@@ -172,6 +172,7 @@
   });
 </script>
 {% endblock %}
+
 
 
 
