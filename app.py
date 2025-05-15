@@ -285,29 +285,41 @@ def eliminar_ia(nombre):
 
 @app.route("/preguntar_ia", methods=["POST"])
 def preguntar_ia():
+    from flask import jsonify
     pregunta = request.form["pregunta"]
+    
     archivos = sorted(
         [f for f in os.listdir("static/ia") if f.endswith((".pdf", ".docx", ".txt"))],
         key=lambda f: os.path.getmtime(os.path.join("static/ia", f)),
         reverse=True
     )
+    
     if not archivos:
         flash("⚠️ No hay archivos para consultar.")
         return redirect(url_for("ia"))
 
-    texto = extraer_texto(os.path.join("static/ia", archivos[0]))
-    chunks = dividir_en_chunks(texto)
-    embeddings = [obtener_embedding(c) for c in chunks]
-    pregunta_embedding = obtener_embedding(pregunta)
-    top_chunk = chunks[np.argmax([similitud_coseno(e, pregunta_embedding) for e in embeddings])]
+    try:
+        texto = extraer_texto(os.path.join("static/ia", archivos[0]))
+        chunks = dividir_en_chunks(texto)
+        chunks = chunks[:30]  # limitar a 30 chunks
 
-    respuesta = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
-            {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
-        ]
-    )["choices"][0]["message"]["content"]
+        embeddings = [obtener_embedding(c) for c in chunks]
+        pregunta_embedding = obtener_embedding(pregunta)
+
+        top_chunk = chunks[np.argmax([similitud_coseno(e, pregunta_embedding) for e in embeddings])]
+
+        respuesta = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
+                {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
+            ]
+        )["choices"][0]["message"]["content"]
+
+    except Exception as e:
+        flash("❌ Error al procesar la pregunta. Intenta nuevamente más tarde.")
+        print("ERROR en /preguntar_ia:", e)
+        return redirect(url_for("ia"))
 
     archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
     return render_template("ia.html", archivos=archivos, respuesta=respuesta)
