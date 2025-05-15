@@ -503,9 +503,13 @@ def registrar_gasto():
 
 @app.route('/initdb')
 def init_db():
-    from database import db
-    db.create_all()
-    return "Base de datos actualizada correctamente."
+    try:
+        from database import db
+        db.create_all()
+        return "Base de datos actualizada correctamente."
+    except Exception as e:
+        print(f"Error al crear la base de datos: {e}")
+        return f"Error al crear la base de datos: {e}", 500
 
 if __name__ == '__main__':
     with app.app_context():
