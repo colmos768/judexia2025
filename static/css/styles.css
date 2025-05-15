@@ -167,3 +167,17 @@ th {
 .edit-link:hover {
     text-decoration: underline;
 }
+
+/* === Clases de utilidad extendidas === */
+.input {
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-bordered {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #fff;
+}
