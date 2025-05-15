@@ -403,8 +403,6 @@ def allowed_file(filename):
 # Ruta para subir formatos
 @app.route("/subir_formato", methods=["POST"])
 def subir_formato():
-    ...@app.route("/subir_formato", methods=["POST"])
-def subir_formato():
     archivo = request.files.get("archivo")
     usuario = request.form.get("usuario")
     causa_id = request.form.get("causa_id") or None
@@ -554,38 +552,6 @@ def init_db():
 from flask import request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from models import FormatoLegal  # Asegúrate de importar tu modelo
-
-@app.route("/subir_formato", methods=["POST"])
-def subir_formato():
-    archivo = request.files.get("archivo")
-    usuario = request.form.get("usuario")
-    causa_id = request.form.get("causa_id") or None
-    observaciones = request.form.get("observaciones")
-
-    if not archivo or not usuario:
-        flash("Archivo y usuario son obligatorios.")
-        return redirect(url_for("formatos"))
-
-    if archivo and allowed_file(archivo.filename):
-        filename = secure_filename(archivo.filename)
-        path = os.path.join("static", "formatos", filename)
-        archivo.save(path)
-
-        formato = FormatoLegal(
-            nombre_original=archivo.filename,
-            filename=filename,
-            usuario=usuario,
-            causa_id=causa_id,
-            observaciones=observaciones,
-            fecha_subida=datetime.utcnow()
-        )
-        db.session.add(formato)
-        db.session.commit()
-        flash("Formato subido correctamente.")
-    else:
-        flash("Formato inválido. Solo se permiten archivos PDF, DOCX, TXT, JPG, PNG.")
-
-    return redirect(url_for("formatos"))
 
 if __name__ == '__main__':
     with app.app_context():
