@@ -200,30 +200,37 @@ def dashboard():
     ]
     return render_template("dashboard.html", **locals())
 
-@app.route("/clientes")
-def clientes():
-    lista = Cliente.query.all()
-    return render_template("clientes.html", clientes=lista)
+from flask import flash
 
 @app.route("/registrar_cliente", methods=["POST"])
 def registrar_cliente():
-    data = request.form
-    nuevo = Cliente(
-        nombre=data["nombre"],
-        rut=data["rut"],
-        email=data["email"],
-        telefono=data["telefono"],
-        direccion=data["direccion"],
-        fecha_nacimiento=datetime.strptime(data["fecha_nacimiento"], "%Y-%m-%d")
-    )
-    db.session.add(nuevo)
-    db.session.commit()
+    try:
+        data = request.form
+
+        # Validar que los campos obligatorios estén presentes
+        if not data["nombre"] or not data["rut"]:
+            flash("Nombre y RUT son obligatorios.")
+            return redirect(url_for("clientes"))
+
+        fecha_nac = None
+        if data["fecha_nacimiento"]:
+            fecha_nac = datetime.strptime(data["fecha_nacimiento"], "%Y-%m-%d")
+
+        nuevo = Cliente(
+            nombre=data["nombre"],
+            rut=data["rut"],
+            email=data.get("email"),
+            telefono=data.get("telefono"),
+            direccion=data.get("direccion"),
+            fecha_nacimiento=fecha_nac
+        )
+        db.session.add(nuevo)
+        db.session.commit()
+        flash("Cliente registrado correctamente.")
+    except Exception as e:
+        flash(f"Error al registrar cliente: {str(e)}")
+
     return redirect(url_for("clientes"))
-
-from werkzeug.utils import secure_filename
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'docx', 'txt', 'jpg', 'png'}
 
 @app.route("/causas", methods=["GET", "POST"])
 def causas():
