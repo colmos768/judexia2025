@@ -2,124 +2,118 @@
 {% block content %}
 
 <div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar izquierdo -->
-        <div class="col-md-2">
-            <!-- Ya contenido por base.html -->
-        </div>
+<div class="row">
+<!-- Sidebar izquierdo -->
+<div class="col-md-2">
+<!-- Ya contenido por base.html -->
+</div>
+<!-- Contenido principal -->
+<div class="col-md-10">
+<!-- Barra superior -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2 class="fw-bold">Dashboard</h2>
+</div>
 
-        <!-- Contenido principal -->
-        <div class="col-md-10">
-            <!-- Barra superior -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold">Dashboard</h2>
-                <a href="/login" class="btn btn-danger fw-semibold">Cerrar sistema</a>
-            </div>
-
-            <!-- Tarjetas resumen -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="bg-primary text-white p-3 rounded shadow text-center">
-                        <div class="fs-4 fw-bold">{{ causas_mes }}</div>
-                        <div>Causas del mes</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="bg-success text-white p-3 rounded shadow text-center">
-                        <div class="fs-4 fw-bold">{{ clientes_nuevos }}</div>
-                        <div>Clientes nuevos</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="bg-warning text-white p-3 rounded shadow text-center">
-                        <div class="fs-4 fw-bold">{{ audiencias_proximas }}</div>
-                        <div>Audiencias próximas</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="bg-danger text-white p-3 rounded shadow text-center">
-                        <div class="fs-4 fw-bold">{{ honorarios_pendientes }}</div>
-                        <div>Honorarios pendientes</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráfico y recordatorios -->
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header fw-semibold">
-                            <i class="bi bi-graph-up"></i> Causas
-                        </div>
-                        <div class="card-body">
-                            <canvas id="graficoCausas"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header fw-semibold">
-                            <i class="bi bi-list-check"></i> Recordatorios
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            {% for item in recordatorios %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><i class="bi bi-square"></i> {{ item.texto }}</div>
-                                {% if item.tag %}
-                                <span class="badge rounded-pill 
-                                    {% if 'Hoy' in item.tag %} bg-primary
-                                    {% elif 'días' in item.tag %} bg-warning
-                                    {% elif 'sema' in item.tag %} bg-danger
-                                    {% else %} bg-secondary {% endif %}">
-                                    {{ item.tag }}
-                                </span>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+<!-- Tarjetas resumen -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="bg-primary text-white p-3 rounded shadow text-center">
+      <div class="fs-4 fw-bold">{{ causas_mes }}</div>
+      <div>Causas del mes</div>
     </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bg-success text-white p-3 rounded shadow text-center">
+      <div class="fs-4 fw-bold">{{ clientes_nuevos }}</div>
+      <div>Clientes nuevos</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bg-warning text-white p-3 rounded shadow text-center">
+      <div class="fs-4 fw-bold">{{ audiencias_proximas }}</div>
+      <div>Audiencias próximas</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="bg-danger text-white p-3 rounded shadow text-center">
+      <div class="fs-4 fw-bold">{{ honorarios_pendientes }}</div>
+      <div>Honorarios pendientes</div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráfico y recordatorios -->
+<div class="row">
+  <div class="col-md-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-graph-up"></i> Causas
+      </div>
+      <div class="card-body">
+        <canvas id="graficoCausas"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-list-check"></i> Recordatorios
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for item in recordatorios %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div><i class="bi bi-square"></i> {{ item.texto }}</div>
+          {% if item.tag %}
+          <span class="badge rounded-pill 
+            {% if 'Hoy' in item.tag %} bg-primary 
+            {% elif 'días' in item.tag %} bg-warning 
+            {% elif 'sema' in item.tag %} bg-danger 
+            {% else %} bg-secondary {% endif %}">
+            {{ item.tag }}
+          </span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div>
 </div>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('graficoCausas').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {{ meses | tojson }},
-            datasets: [{
-                label: 'Causas',
-                data: {{ grafico_causas | tojson }},
-                backgroundColor: 'rgba(26, 35, 126, 0.2)',
-                borderColor: '#1a237e',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3,
-                pointBackgroundColor: '#1a237e'
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
-        }
-    });
+  const ctx = document.getElementById('graficoCausas').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ meses | tojson }},
+      datasets: [{
+        label: 'Causas',
+        data: {{ grafico_causas | tojson }},
+        backgroundColor: 'rgba(26, 35, 126, 0.2)',
+        borderColor: '#1a237e',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#1a237e'
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
 </script>
 
 {% endblock %}
+
 
 
 
