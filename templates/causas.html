@@ -1,63 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">📁 Causas Registradas</h2>
-    <a href="{{ url_for('registrar_causa') }}" class="btn btn-primary">➕ Nueva Causa</a>
-  </div>
+<div class="container mt-4">
+  <h2 class="mb-4">📁 Listado de Causas</h2>
 
-  {% if causas %}
-  <div class="table-responsive">
-    <table class="table table-striped table-bordered align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Tipo</th>
-          <th>Procedimiento</th>
-          <th>Cliente</th>
-          <th>Judicial</th>
-          <th>Tribunal</th>
-          <th>Rol</th>
-          <th>Ingreso</th>
-          <th>Última gestión</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for causa in causas %}
-        <tr>
-          <td>{{ causa.tipo_causa }}</td>
-          <td>{{ causa.procedimiento }}</td>
-          <td>{{ causa.cliente.nombre }}</td>
-          <td>
-            {% if causa.judicial %}
-              <span class="badge bg-success">Judicial</span>
-            {% else %}
-              <span class="badge bg-secondary">Extrajudicial</span>
-            {% endif %}
-          </td>
-          <td>{{ causa.tribunal or '—' }}</td>
-          <td>
-            {% if causa.rol_numero and causa.letra and causa.rol_anio %}
-              {{ causa.letra }}-{{ causa.rol_numero }}-{{ causa.rol_anio }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-          <td>{{ causa.fecha_ingreso.strftime('%d-%m-%Y') }}</td>
-          <td>
-            {% if causa.ultima_gestion %}
-              {{ causa.ultima_gestion }}<br>
-              <small class="text-muted">{{ causa.fecha_ultima_gestion.strftime('%d-%m-%Y') if causa.fecha_ultima_gestion else '' }}</small>
-            {% else %}
-              —
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-    <div class="alert alert-info">No hay causas registradas aún.</div>
-  {% endif %}
+  <a href="#formularioNuevaCausa" class="btn btn-primary mb-3">➕ Registrar Nueva Causa</a>
+
+  <table class="table table-striped table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Cliente</th>
+        <th>Tipo / Procedimiento</th>
+        <th>¿Judicial?</th>
+        <th>Rol</th>
+        <th>Tribunal</th>
+        <th>Última gestión</th>
+        <th>Documentos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for causa in causas %}
+      <tr>
+        <td>{{ causa.cliente.nombre }}</td>
+        <td>{{ causa.tipo_causa }} / {{ causa.procedimiento }}</td>
+        <td>{{ 'Sí' if causa.judicial else 'No' }}</td>
+        <td>
+          {% if causa.judicial %}
+            {{ causa.letra }}-{{ causa.rol_numero }}-{{ causa.rol_anio }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td>{{ causa.tribunal or '—' }}</td>
+        <td>
+          {{ causa.ultima_gestion or '—' }}<br>
+          {% if causa.fecha_ultima_gestion %}
+            <small>{{ causa.fecha_ultima_gestion.strftime('%d-%m-%Y') }}</small>
+          {% endif %}
+        </td>
+        <td>
+          {% if causa.documentos %}
+            <ul class="mb-0">
+              {% for doc in causa.documentos %}
+              <li>
+                <a href="{{ url_for('static', filename=doc.ruta_archivo.split('static/')[-1]) }}"
+                   target="_blank">{{ doc.nombre_archivo }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}
