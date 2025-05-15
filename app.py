@@ -225,6 +225,7 @@ def allowed_file(filename):
 @app.route("/causas", methods=["GET", "POST"])
 def causas():
     from werkzeug.utils import secure_filename
+    from uuid import uuid4
 
     if request.method == "POST":
         data = request.form
@@ -238,9 +239,9 @@ def causas():
             letra=data.get("letra"),
             rol_numero=data.get("rol_numero"),
             rol_anio=int(data.get("rol_anio") or 0),
-            fecha_ingreso=data.get("fecha_ingreso"),
+            fecha_ingreso=datetime.strptime(data["fecha_ingreso"], "%Y-%m-%d"),
             ultima_gestion=data.get("ultima_gestion"),
-            fecha_ultima_gestion=data.get("fecha_ultima_gestion") or None,
+            fecha_ultima_gestion=datetime.strptime(data["fecha_ultima_gestion"], "%Y-%m-%d") if data.get("fecha_ultima_gestion") else None,
             ingreso_juridico=data.get("ingreso_juridico"),
             cliente_id=int(data["cliente_id"]),
             contraparte_id=int(data["contraparte_id"]) if data.get("contraparte_id") else None
@@ -249,15 +250,19 @@ def causas():
         db.session.add(nueva_causa)
         db.session.commit()
 
+        # Guardar prueba habilitante
+        os.makedirs("static/documentos", exist_ok=True)
         archivos = request.files.getlist("documentos")
         for archivo in archivos:
-            if archivo.filename != "":
-                filename = secure_filename(archivo.filename)
-                ruta = os.path.join("static", "documentos", filename)
+            if archivo and archivo.filename != "":
+                nombre_original = archivo.filename
+                nombre_unico = f"{uuid4().hex}_{secure_filename(nombre_original)}"
+                ruta = os.path.join("static", "documentos", nombre_unico)
                 archivo.save(ruta)
+
                 nuevo_doc = Documento(
                     causa_id=nueva_causa.id,
-                    nombre_archivo=archivo.filename,
+                    nombre_archivo=nombre_original,
                     ruta_archivo=ruta,
                     tipo="prueba habilitante"
                 )
