@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Response, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+
 import os
 import uuid
 from datetime import datetime, date
@@ -10,6 +12,9 @@ import tiktoken
 import numpy as np
 import io
 import csv
+
+from models import FormatoLegal
+from database import db
 
 # ========== FLASK APP ==========
 app = Flask(__name__)
