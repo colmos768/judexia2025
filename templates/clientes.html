@@ -5,11 +5,15 @@
 
     <form action="{{ url_for('registrar_cliente') }}" method="POST" class="grid grid-cols-2 gap-4 mb-6 bg-white p-4 rounded-xl shadow">
         <input name="nombre" placeholder="Nombre completo" required class="input input-bordered" />
-        <input name="rut" placeholder="RUT" required class="input input-bordered" />
+        <div class="flex space-x-2">
+            <input name="rut_num" placeholder="RUT (solo números)" maxlength="8" required class="input input-bordered w-2/3" />
+            <input name="rut_dv" placeholder="DV" maxlength="1" required class="input input-bordered w-1/3" />
+        </div>
         <input name="email" placeholder="Correo electrónico" class="input input-bordered" />
         <input name="telefono" placeholder="Teléfono" class="input input-bordered" />
         <input name="direccion" placeholder="Dirección" class="input input-bordered col-span-2" />
         <input name="fecha_nacimiento" type="date" required class="input input-bordered" />
+        <input name="profesion" placeholder="Profesión u oficio" class="input input-bordered col-span-2" />
         <button type="submit" class="btn btn-primary col-span-2">Registrar cliente</button>
     </form>
 
@@ -23,6 +27,7 @@
                     <th class="px-4 py-2">Correo</th>
                     <th class="px-4 py-2">Teléfono</th>
                     <th class="px-4 py-2">Dirección</th>
+                    <th class="px-4 py-2">Profesión</th>
                     <th class="px-4 py-2">Fecha Nac.</th>
                 </tr>
             </thead>
@@ -30,10 +35,11 @@
                 {% for c in clientes %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-2">{{ c.nombre }}</td>
-                    <td class="px-4 py-2">{{ c.rut }}</td>
+                    <td class="px-4 py-2">{{ c.rut_num }}-{{ c.rut_dv }}</td>
                     <td class="px-4 py-2">{{ c.email }}</td>
                     <td class="px-4 py-2">{{ c.telefono }}</td>
                     <td class="px-4 py-2">{{ c.direccion }}</td>
+                    <td class="px-4 py-2">{{ c.profesion }}</td>
                     <td class="px-4 py-2">{{ c.fecha_nacimiento.strftime('%d-%m-%Y') }}</td>
                 </tr>
                 {% endfor %}
@@ -42,5 +48,3 @@
     </div>
 </div>
 {% endblock %}
-
-
