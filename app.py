@@ -38,8 +38,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
 
+from database import db
+db.init_app(app)
+
 # ========== BASE DE DATOS ==========
-db = SQLAlchemy(app)
+# ¡Sin volver a crear db aquí!
 
 class Cliente(db.Model):
     __tablename__ = 'clientes'
