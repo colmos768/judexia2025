@@ -563,6 +563,7 @@ def ajustar_clientes():
         return "✅ Tabla 'clientes' actualizada correctamente."
     except Exception as e:
         return f"❌ Error: {str(e)}"
+
 @app.route('/initdb')
 def init_db():
     try:
@@ -572,21 +573,15 @@ def init_db():
     except Exception as e:
         print(f"Error al crear la base de datos: {e}")
         return f"Error al crear la base de datos: {e}", 500
-# Manejador de error 500
+
 @app.errorhandler(500)
 def error_500(e):
     global ultimo_error
     ultimo_error = traceback.format_exc()
     return render_template("500.html"), 500
 
-# Ruta de depuración para mostrar el último error
 @app.route("/debug_error")
 def debug_error():
-    return Response(ultimo_error, mimetype="text/plain")
-
-@app.route('/debug_error')
-def debug_error():
-    global ultimo_error
     return f"<pre>{ultimo_error}</pre>"
 
 if __name__ == '__main__':
