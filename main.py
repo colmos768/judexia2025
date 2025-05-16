@@ -41,12 +41,6 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    @app.route("/")
-    def index():
-        return "Judexia funcionando correctamente ✅"
-
-    return app
-   
     # =================== RUTAS GENERALES ===================
 
     @app.route("/")
@@ -77,7 +71,6 @@ def create_app():
             {"texto": "Preparar informe semanal", "tag": "1 sema"}
         ]
         return render_template("dashboard.html", **locals())
-
     # =================== RUTAS CLIENTES ===================
 
     @app.route("/clientes")
@@ -153,8 +146,7 @@ def create_app():
         causas = Causa.query.all()
         clientes = Cliente.query.all()
         contrapartes = Contraparte.query.all()
-        return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contrapartes)
-
+        return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contraparte)
     # =================== RUTAS IA ===================
 
     def extraer_texto(path):
@@ -257,7 +249,6 @@ def create_app():
 
         archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
         return render_template("ia.html", archivos=archivos, respuesta=respuesta)
-
     # =================== RUTAS FORMATOS ===================
 
     def allowed_file(filename):
@@ -333,7 +324,6 @@ def create_app():
             db.session.commit()
             flash("🗑️ Formato eliminado correctamente.")
         return redirect(url_for("formatos"))
-
     # =================== RUTAS FACTURACIÓN ===================
 
     @app.route("/facturacion", methods=["GET", "POST"])
@@ -421,7 +411,6 @@ def create_app():
         output.headers["Content-Disposition"] = "attachment; filename=facturacion.csv"
         output.headers["Content-type"] = "text/csv"
         return output
-
     # =================== RUTAS SERVICIO Y GASTOS ===================
 
     @app.route("/servicio")
@@ -513,6 +502,5 @@ def create_app():
             return '✅ Columna tipo_causa agregada correctamente.'
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
-    
-# Al final de tu archivo app.py
-app = create_app()
+
+    return app
