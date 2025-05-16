@@ -563,7 +563,6 @@ def ajustar_clientes():
         return "✅ Tabla 'clientes' actualizada correctamente."
     except Exception as e:
         return f"❌ Error: {str(e)}"
-
 @app.route('/initdb')
 def init_db():
     try:
@@ -573,7 +572,6 @@ def init_db():
     except Exception as e:
         print(f"Error al crear la base de datos: {e}")
         return f"Error al crear la base de datos: {e}", 500
-
 # Manejador de error 500
 @app.errorhandler(500)
 def error_500(e):
