@@ -559,7 +559,7 @@ def debug_error():
     return f"<pre>{ultimo_error}</pre>"
 
 from flask import Flask
-from your_model_file import db  # importa el objeto db desde tu archivo
+from models import db  # importa el objeto db desde tu archivo
 
 @app.route('/fix_tipo_causa')
 def fix_tipo_causa():
