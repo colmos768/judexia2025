@@ -101,4 +101,13 @@ class PagoCuota(db.Model):
     estado = db.Column(db.String(50))
     vencimiento = db.Column(db.Date)
 
+class Gasto(db.Model):
+    __tablename__ = 'gastos'
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.Date, default=date.today)
+    categoria = db.Column(db.String(100))
+
+
 
