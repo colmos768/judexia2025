@@ -575,16 +575,6 @@ from models import db  # importa el objeto db desde tu archivo
 
 from sqlalchemy import text  # Asegúrate de tener esto en la parte superior del archivo
 
-@app.route('/fix_tipo_causa')
-def fix_tipo_causa():
-    try:
-        with app.app_context():
-            db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
-            db.session.commit()
-        return '✅ Columna tipo_causa agregada correctamente.'
-    except Exception as e:
-        return f'❌ Error al ejecutar ALTER TABLE: {e}'
-
 @app.route('/ver_tablas')
 def ver_tablas():
     try:
@@ -613,7 +603,15 @@ def ver_columnas_causas():
     except Exception as e:
         return f'❌ Error al listar columnas: {e}'
 
-# =======================================================================
+@app.route('/fix_tipo_causa')
+def fix_tipo_causa():
+    try:
+        with app.app_context():
+            db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
+            db.session.commit()
+        return '✅ Columna tipo_causa agregada correctamente.'
+    except Exception as e:
+        return f'❌ Error al ejecutar ALTER TABLE: {e}'# =======================================================================
 
 if __name__ == '__main__':
     with app.app_context():
