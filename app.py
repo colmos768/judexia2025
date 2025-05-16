@@ -12,14 +12,12 @@ import tiktoken
 import numpy as np
 import io
 import csv
+import traceback  # ⬅️ Agregado para captura de errores 500
 
 from models import FormatoLegal
-from database import db
+from database import db  # ✅ Importación única y correcta
 
-import traceback  # ⬅️ Agrega esto si no está
-
-ultimo_error = ""  # ⬅️ Variable global para guardar el último error
-
+ultimo_error = ""  # Variable global para mostrar errores si ocurre un 500
 
 # ========== FLASK APP ==========
 app = Flask(__name__)
@@ -48,8 +46,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
 
-from database import db
-db.init_app(app)
+db.init_app(app)  # ✅ Solo una vez, sin repetir
 
 # ========== BASE DE DATOS ==========
 # ¡Sin volver a crear db aquí!
@@ -138,7 +135,6 @@ class Gasto(db.Model):
 
 with app.app_context():
     db.create_all()
-
 # ========== FUNCIONES IA ==========
 def extraer_texto(path):
     if path.endswith(".pdf"):
@@ -179,7 +175,6 @@ def similitud_coseno(a, b):
     a = np.array(a)
     b = np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
 # ========== RUTAS ==========
 @app.route("/")
 def index():
@@ -234,7 +229,6 @@ def registrar_cliente():
     db.session.commit()
     flash("Cliente registrado correctamente.")
     return redirect(url_for("clientes"))
-
 @app.route("/causas", methods=["GET", "POST"])
 def causas():
     from werkzeug.utils import secure_filename
@@ -290,7 +284,6 @@ def causas():
     clientes = Cliente.query.all()
     contrapartes = Contraparte.query.all()
     return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contrapartes)
-
 @app.route("/ia")
 def ia():
     archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
@@ -342,10 +335,9 @@ def preguntar_ia():
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Eres un asistente legal que responde en lenguaje claro."},
-                {"role": "user", "content": f"Basado en este texto: {top_chunk}\n\nResponde: {pregunta}"}
+                {"role": "user", "content": f"Basado en este texto: {top_chunk}\\n\\nResponde: {pregunta}"}
             ]
         )["choices"][0]["message"]["content"]
-
     except Exception as e:
         flash("❌ Error al procesar la pregunta. Intenta nuevamente más tarde.")
         print("ERROR en /preguntar_ia:", e)
@@ -393,7 +385,6 @@ def eliminar_formato(id):
         db.session.commit()
         flash("🗑️ Formato eliminado correctamente.")
     return redirect(url_for("formatos"))
-
 # Función auxiliar para validar extensiones permitidas
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'docx', 'txt', 'jpg', 'png'}
@@ -451,7 +442,6 @@ def facturacion():
     pagos = pagos_query.order_by(PagoCuota.fecha_pago.desc()).all()
 
     return render_template("facturacion.html", **locals())
-
 @app.route('/registrar_honorario', methods=['GET', 'POST'])
 def registrar_honorario():
     if request.method == 'POST':
@@ -516,7 +506,6 @@ def exportar_facturacion():
     output.headers["Content-Disposition"] = "attachment; filename=facturacion.csv"
     output.headers["Content-type"] = "text/csv"
     return output
-
 @app.route("/servicio")
 def servicio():
     return render_template("servicio.html")
@@ -537,20 +526,6 @@ def registrar_gasto():
 
     return render_template('registrar_gasto.html', date_today=date.today())
 
-@app.route('/initdb')
-def init_db():
-    try:
-        from database import db
-        db.create_all()
-        return "Base de datos actualizada correctamente."
-    except Exception as e:
-        print(f"Error al crear la base de datos: {e}")
-        return f"Error al crear la base de datos: {e}", 500
-
-from flask import request, redirect, url_for, flash
-from werkzeug.utils import secure_filename
-from models import FormatoLegal  # Asegúrate de importar tu modelo
-
 @app.route("/ajustar_clientes")
 def ajustar_clientes():
     try:
@@ -565,9 +540,8 @@ def ajustar_clientes():
         return f"❌ Error: {str(e)}"
 
 @app.route('/initdb')
-def crear_base():  # ← le cambiamos el nombre a la función
+def init_db():
     try:
-        from database import db
         db.create_all()
         return "Base de datos actualizada correctamente."
     except Exception as e:
@@ -588,14 +562,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
-
-
-
-
-
-
-
 
 
 
