@@ -565,7 +565,7 @@ def ajustar_clientes():
         return f"❌ Error: {str(e)}"
 
 @app.route('/initdb')
-def init_db():
+def crear_base():  # ← le cambiamos el nombre a la función
     try:
         from database import db
         db.create_all()
