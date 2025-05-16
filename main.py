@@ -41,7 +41,11 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    return app  # 👈 ESTA LÍNEA ES CLAVE
+    @app.route("/")
+    def index():
+        return "Judexia funcionando correctamente ✅"
+
+    return app
    
     # =================== RUTAS GENERALES ===================
 
@@ -509,10 +513,6 @@ def create_app():
             return '✅ Columna tipo_causa agregada correctamente.'
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
-
-@app.route("/")
-def index():
-    return "Judexia corriendo ✅"
     
 # Al final de tu archivo app.py
 app = create_app()
