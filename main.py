@@ -504,3 +504,9 @@ def create_app():
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
     return app
+
+# Solo se ejecuta si corres localmente con: python main.py
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
+
