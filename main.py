@@ -464,7 +464,7 @@ def create_app():
         ultimo_error = traceback.format_exc()
         return render_template("500.html"), 500
 
-    # =================== RUTAS DE DEPURACIÓN Y FIX ===================
+        # =================== RUTAS DE DEPURACIÓN Y FIX ===================
 
     @app.route('/ver_tablas')
     def ver_tablas():
@@ -503,10 +503,28 @@ def create_app():
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
+    @app.route("/initdb")
+    def init_db():
+        try:
+            db.create_all()
+            return "✅ Base de datos creada correctamente."
+        except Exception as e:
+            return f"❌ Error al crear la base de datos: {e}", 500
+
+    @app.route("/debug_error")
+    def debug_error():
+        return f"<pre>{ultimo_error}</pre>"
+
+    @app.errorhandler(500)
+    def error_500(e):
+        global ultimo_error
+        ultimo_error = traceback.format_exc()
+        return render_template("500.html"), 500
+
     return app
 
-# Solo se ejecuta si corres localmente con: python main.py
+# =================== EJECUCIÓN LOCAL ===================
+
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True)
-
