@@ -510,5 +510,9 @@ def create_app():
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
+@app.route("/")
+def index():
+    return "Judexia corriendo ✅"
+    
 # Al final de tu archivo app.py
 app = create_app()
