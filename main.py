@@ -446,7 +446,7 @@ def create_app():
         except Exception as e:
             return f"❌ Error: {str(e)}"
 
-        @app.route("/initdb")
+           @app.route("/initdb")
     def init_db():
         try:
             db.create_all()
@@ -465,7 +465,7 @@ def create_app():
         return render_template("500.html"), 500
 
 
-        # =================== RUTAS DE DEPURACIÓN Y FIX ===================
+            # =================== RUTAS DE DEPURACIÓN Y FIX ===================
 
     @app.route('/ver_tablas')
     def ver_tablas():
