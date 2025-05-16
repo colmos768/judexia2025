@@ -446,7 +446,7 @@ def create_app():
         except Exception as e:
             return f"❌ Error: {str(e)}"
 
-           @app.route("/initdb")
+                  @app.route("/initdb")
     def init_db():
         try:
             db.create_all()
