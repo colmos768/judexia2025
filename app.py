@@ -584,6 +584,11 @@ def error_500(e):
 def debug_error():
     return Response(ultimo_error, mimetype="text/plain")
 
+@app.route('/debug_error')
+def debug_error():
+    global ultimo_error
+    return f"<pre>{ultimo_error}</pre>"
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
