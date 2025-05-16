@@ -559,6 +559,14 @@ def ajustar_clientes():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
+@app.route('/initdb')
+def init_db():
+    try:
+        db.create_all()
+        return "✅ Base de datos creada correctamente."
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
