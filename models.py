@@ -10,17 +10,13 @@ class Cliente(db.Model):
     __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    rut_num = db.Column(db.String(8))
-    rut_dv = db.Column(db.String(1))
+    rut_num = db.Column(db.String(8))  # <- ESTO
+    rut_dv = db.Column(db.String(1))   # <- ESTO
     email = db.Column(db.String(100))
     telefono = db.Column(db.String(20))
     direccion = db.Column(db.String(200))
-    profesion = db.Column(db.String(100))
+    profesion = db.Column(db.String(100))  # <- ESTO
     fecha_nacimiento = db.Column(db.Date)
-
-    causas = db.relationship('Causa', backref='cliente', lazy=True)
-    pagos = db.relationship('PagoCuota', backref='cliente', lazy=True)
-
 
 class Contraparte(db.Model):
     __tablename__ = 'contrapartes'
