@@ -567,10 +567,12 @@ def ajustar_clientes():
 @app.route('/initdb')
 def init_db():
     try:
+        from database import db
         db.create_all()
-        return "✅ Base de datos creada correctamente."
+        return "Base de datos actualizada correctamente."
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        print(f"Error al crear la base de datos: {e}")
+        return f"Error al crear la base de datos: {e}", 500
 
 # Manejador de error 500
 @app.errorhandler(500)
