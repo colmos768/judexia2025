@@ -1,2 +1,2 @@
-web: gunicorn 'app:create_app()'
+web: gunicorn wsgi:app
 release: python setup_db.py
