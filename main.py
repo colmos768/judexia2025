@@ -1,48 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, flash, make_response, send_from_directory, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
-from werkzeug.utils import secure_filename
+from flask import render_template, redirect, url_for
 
-import os
-import uuid
-from datetime import datetime, date
-import openai
-import PyPDF2
-import docx
-import tiktoken
-import numpy as np
-import io
-import csv
-import traceback
-
-from models import FormatoLegal, Cliente, Causa, Documento, Honorario, PagoCuota, Contraparte, Gasto
-from database import db
-from dotenv import load_dotenv
-
-ultimo_error = ""
-
-load_dotenv()
-
-def create_app():
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.secret_key = os.getenv("FLASK_SECRET_KEY", "clave")
-    app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
-
-    db.init_app(app)
-
-    os.makedirs("static/ia", exist_ok=True)
-    os.makedirs("static/formatos", exist_ok=True)
-    os.makedirs("static/documentos", exist_ok=True)
-
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
-
-    with app.app_context():
-        db.create_all()
-
-    # =================== RUTAS GENERALES ===================
-
+def register_routes_generales(app):
     @app.route("/")
     def index():
         return redirect(url_for("dashboard"))
@@ -71,8 +29,12 @@ def create_app():
             {"texto": "Preparar informe semanal", "tag": "1 sema"}
         ]
         return render_template("dashboard.html", **locals())
-    # =================== RUTAS CLIENTES ===================
+from flask import render_template, request, redirect, url_for, flash
+from models import Cliente
+from database import db
+from datetime import datetime
 
+def register_routes_clientes(app):
     @app.route("/clientes")
     def clientes():
         lista = Cliente.query.all()
@@ -95,9 +57,15 @@ def create_app():
         db.session.commit()
         flash("Cliente registrado correctamente.")
         return redirect(url_for("clientes"))
+from flask import render_template, request, redirect, url_for, flash
+from models import Causa, Cliente, Contraparte, Documento
+from database import db
+from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
+import uuid
 
-    # =================== RUTAS CAUSAS ===================
-
+def register_routes_causas(app):
     @app.route("/causas", methods=["GET", "POST"])
     def causas():
         if request.method == "POST":
@@ -146,9 +114,17 @@ def create_app():
         causas = Causa.query.all()
         clientes = Cliente.query.all()
         contrapartes = Contraparte.query.all()
-        return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contraparte)
-    # =================== RUTAS IA ===================
+        return render_template("causas.html", causas=causas, clientes=clientes, contrapartes=contrapartes)
+from flask import render_template, request, redirect, url_for, flash
+import os
+import openai
+import numpy as np
+import PyPDF2
+import docx
+import tiktoken
+from database import db
 
+def register_routes_ia(app):
     def extraer_texto(path):
         if path.endswith(".pdf"):
             with open(path, "rb") as f:
@@ -214,13 +190,13 @@ def create_app():
     @app.route("/preguntar_ia", methods=["POST"])
     def preguntar_ia():
         pregunta = request.form["pregunta"]
-        
+
         archivos = sorted(
             [f for f in os.listdir("static/ia") if f.endswith((".pdf", ".docx", ".txt"))],
             key=lambda f: os.path.getmtime(os.path.join("static/ia", f)),
             reverse=True
         )
-        
+
         if not archivos:
             flash("⚠️ No hay archivos para consultar.")
             return redirect(url_for("ia"))
@@ -249,8 +225,14 @@ def create_app():
 
         archivos = [f for f in os.listdir("static/ia") if f != ".keep"]
         return render_template("ia.html", archivos=archivos, respuesta=respuesta)
-    # =================== RUTAS FORMATOS ===================
+from flask import render_template, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+from models import FormatoLegal, Causa
+from database import db
+from datetime import datetime
+import os
 
+def register_routes_formatos(app):
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'docx', 'txt', 'jpg', 'png'}
 
@@ -324,8 +306,14 @@ def create_app():
             db.session.commit()
             flash("🗑️ Formato eliminado correctamente.")
         return redirect(url_for("formatos"))
-    # =================== RUTAS FACTURACIÓN ===================
+from flask import render_template, request, redirect, url_for, make_response, flash
+from models import Cliente, Causa, Honorario, PagoCuota
+from database import db
+from datetime import datetime, date
+import csv
+import io
 
+def register_routes_facturacion(app):
     @app.route("/facturacion", methods=["GET", "POST"])
     def facturacion():
         clientes = Cliente.query.all()
@@ -411,8 +399,12 @@ def create_app():
         output.headers["Content-Disposition"] = "attachment; filename=facturacion.csv"
         output.headers["Content-type"] = "text/csv"
         return output
-    # =================== RUTAS SERVICIO Y GASTOS ===================
+from flask import render_template, request, redirect, url_for
+from models import Gasto
+from database import db
+from datetime import date
 
+def register_routes_servicio(app):
     @app.route("/servicio")
     def servicio():
         return render_template("servicio.html")
@@ -432,9 +424,12 @@ def create_app():
             return redirect(url_for('facturacion'))
 
         return render_template('registrar_gasto.html', date_today=date.today())
+from flask import render_template, request, redirect, url_for
+from sqlalchemy import text
+from models import Causa
+from database import db
 
-    # =================== RUTAS DE AJUSTE Y DEPURACIÓN ===================
-
+def register_routes_utilidades(app):
     @app.route("/ajustar_clientes")
     def ajustar_clientes():
         try:
@@ -445,40 +440,6 @@ def create_app():
             return "✅ Tabla 'clientes' actualizada correctamente."
         except Exception as e:
             return f"❌ Error: {str(e)}"
-
-                  @app.route("/initdb")
-    def init_db():
-        try:
-            db.create_all()
-            return "✅ Base de datos creada correctamente."
-        except Exception as e:
-            return f"❌ Error al crear la base de datos: {e}", 500
-
-    @app.route("/debug_error")
-    def debug_error():
-        return f"<pre>{ultimo_error}</pre>"
-
-    @app.errorhandler(500)
-    def error_500(e):
-        global ultimo_error
-        ultimo_error = traceback.format_exc()
-        return render_template("500.html"), 500
-
-
-            # =================== RUTAS DE DEPURACIÓN Y FIX ===================
-
-    @app.route('/ver_tablas')
-    def ver_tablas():
-        try:
-            result = db.session.execute(text("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public'
-            """))
-            tablas = [row[0] for row in result]
-            return '<br>'.join(tablas)
-        except Exception as e:
-            return f'❌ Error al listar tablas: {e}'
 
     @app.route('/ver_columnas_causas')
     def ver_columnas_causas():
@@ -504,7 +465,15 @@ def create_app():
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
-        @app.route("/debug_error")
+    @app.route("/initdb")
+    def init_db():
+        try:
+            db.create_all()
+            return "✅ Base de datos creada correctamente."
+        except Exception as e:
+            return f"❌ Error al crear la base de datos: {e}", 500
+
+    @app.route("/debug_error")
     def debug_error():
         return f"<pre>{ultimo_error}</pre>"
 
@@ -513,11 +482,11 @@ def create_app():
         global ultimo_error
         ultimo_error = traceback.format_exc()
         return render_template("500.html"), 500
+from main import create_app
 
-    return app
+# Crear la aplicación
+app = create_app()
 
-# =================== EJECUCIÓN LOCAL ===================
-
+# Configurar y ejecutar el servidor local si es el entorno adecuado
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True)
