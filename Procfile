@@ -1,3 +1,3 @@
-web: gunicorn app:create_app()
+web: gunicorn app:app
 release: python setup_db.py
 
