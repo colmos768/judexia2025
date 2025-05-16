@@ -558,6 +558,31 @@ def error_500(e):
 def debug_error():
     return f"<pre>{ultimo_error}</pre>"
 
+from flask import Flask
+from your_model_file import db  # importa el objeto db desde tu archivo
+
+@app.route('/fix_tipo_causa')
+def fix_tipo_causa():
+    try:
+        db.session.execute('ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT \'Otro\'')
+        db.session.commit()
+        return 'Columna tipo_causa agregada correctamente.'
+    except Exception as e:
+        return f'Error: {e}'
+
+@app.route('/ver_tablas')
+def ver_tablas():
+    try:
+        result = db.session.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        """)
+        tablas = [row[0] for row in result]
+        return '<br>'.join(tablas)
+    except Exception as e:
+        return f'Error al listar tablas: {e}'
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
