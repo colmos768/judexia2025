@@ -503,15 +503,7 @@ def create_app():
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
-    @app.route("/initdb")
-    def init_db():
-        try:
-            db.create_all()
-            return "✅ Base de datos creada correctamente."
-        except Exception as e:
-            return f"❌ Error al crear la base de datos: {e}", 500
-
-    @app.route("/debug_error")
+        @app.route("/debug_error")
     def debug_error():
         return f"<pre>{ultimo_error}</pre>"
 
