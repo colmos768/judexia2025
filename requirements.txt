@@ -1,9 +1,10 @@
 Flask
-Flask-SQLAlchemy
+Flask_SQLAlchemy
 gunicorn
 python-dotenv
 openai
-numpy
-pypdf2
-python-docx
+PyPDF2
+docx
 tiktoken
+numpy
+psycopg2-binary
