@@ -36,6 +36,16 @@ class Documento(db.Model):
     ruta = db.Column(db.String(255), nullable=False)
     causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
 
+class FormatoLegal(db.Model):
+    __tablename__ = 'formatos_legales'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_original = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False, unique=True)
+    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario = db.Column(db.String(100))
+    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
+    version = db.Column(db.Integer, default=1)
+    observaciones = db.Column(db.String(255))
 
 class Causa(db.Model):
     __tablename__ = 'causas'
@@ -61,19 +71,6 @@ class Causa(db.Model):
 
     documentos = db.relationship('Documento', backref='causa', lazy=True)
     formatos = db.relationship('FormatoLegal', backref='causa', lazy=True)
-
-
-class FormatoLegal(db.Model):
-    __tablename__ = 'formatos_legales'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre_original = db.Column(db.String(255), nullable=False)
-    filename = db.Column(db.String(255), nullable=False, unique=True)
-    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
-    usuario = db.Column(db.String(100))
-    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
-    version = db.Column(db.Integer, default=1)
-    observaciones = db.Column(db.String(255))
-
 
 class Honorario(db.Model):
     __tablename__ = 'honorarios'
