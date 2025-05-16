@@ -34,7 +34,7 @@ class Contraparte(db.Model):
 class Documento(db.Model):
     __tablename__ = 'documentos'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
+    nombre_archivo = db.Column(db.String(100), nullable=False)
     tipo = db.Column(db.String(50))
     ruta = db.Column(db.String(255), nullable=False)
     causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
@@ -78,10 +78,10 @@ class FormatoLegal(db.Model):
 class Honorario(db.Model):
     __tablename__ = 'honorarios'
     id = db.Column(db.Integer, primary_key=True)
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
-    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'), nullable=True)
     descripcion = db.Column(db.String(255))
-    monto_total = db.Column(db.Integer)
+    monto_total = db.Column(db.Float)
     fecha_emision = db.Column(db.Date, default=date.today)
     en_cuotas = db.Column(db.Boolean, default=False)
     numero_cuotas = db.Column(db.Integer, default=1)
@@ -92,12 +92,13 @@ class Honorario(db.Model):
 class PagoCuota(db.Model):
     __tablename__ = 'pagos_cuotas'
     id = db.Column(db.Integer, primary_key=True)
-    honorario_id = db.Column(db.Integer, db.ForeignKey('honorarios.id'))
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
-    monto_pagado = db.Column(db.Integer)
+    honorario_id = db.Column(db.Integer, db.ForeignKey('honorarios.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    monto_pagado = db.Column(db.Float)
     fecha_pago = db.Column(db.Date)
     cuota_numero = db.Column(db.Integer)
     total_cuotas = db.Column(db.Integer)
     estado = db.Column(db.String(50))
     vencimiento = db.Column(db.Date)
+
 
