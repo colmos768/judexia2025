@@ -20,6 +20,15 @@ from database import db  # ✅ Importación única y correcta
 
 ultimo_error = ""  # Variable global para mostrar errores si ocurre un 500
 
+from dotenv import load_dotenv
+load_dotenv()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+
 # ========== FLASK APP ==========
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_para_flash'
