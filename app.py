@@ -567,8 +567,9 @@ from models import db  # importa el objeto db desde tu archivo
 @app.route('/fix_tipo_causa')
 def fix_tipo_causa():
     try:
-        db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
-        db.session.commit()
+        with app.app_context():
+            db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
+            db.session.commit()
         return '✅ Columna tipo_causa agregada correctamente.'
     except Exception as e:
         return f'❌ Error al ejecutar ALTER TABLE: {e}'
