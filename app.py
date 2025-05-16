@@ -16,6 +16,11 @@ import csv
 from models import FormatoLegal
 from database import db
 
+import traceback  # ⬅️ Agrega esto si no está
+
+ultimo_error = ""  # ⬅️ Variable global para guardar el último error
+
+
 # ========== FLASK APP ==========
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_para_flash'
@@ -566,6 +571,18 @@ def init_db():
         return "✅ Base de datos creada correctamente."
     except Exception as e:
         return f"❌ Error: {str(e)}"
+
+# Manejador de error 500
+@app.errorhandler(500)
+def error_500(e):
+    global ultimo_error
+    ultimo_error = traceback.format_exc()
+    return render_template("500.html"), 500
+
+# Ruta de depuración para mostrar el último error
+@app.route("/debug_error")
+def debug_error():
+    return Response(ultimo_error, mimetype="text/plain")
 
 if __name__ == '__main__':
     with app.app_context():
