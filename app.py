@@ -508,3 +508,5 @@ def create_app():
         except Exception as e:
             return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
+# Al final de tu archivo app.py
+app = create_app()
