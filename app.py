@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, Response, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from werkzeug.utils import secure_filename
 
 import os
@@ -561,29 +562,43 @@ def debug_error():
 from flask import Flask
 from models import db  # importa el objeto db desde tu archivo
 
-# ======== ⚠️ RUTAS TEMPORALES PARA DEBUG - BORRAR DESPUÉS ========
+# ========= ⚠️ RUTAS TEMPORALES DE DEPURACIÓN - BORRAR DESPUÉS ==========
+
 @app.route('/fix_tipo_causa')
 def fix_tipo_causa():
     try:
-        db.session.execute('ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT \'Otro\'')
+        db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
         db.session.commit()
         return '✅ Columna tipo_causa agregada correctamente.'
     except Exception as e:
-        return f'❌ Error: {e}'
+        return f'❌ Error al ejecutar ALTER TABLE: {e}'
 
 @app.route('/ver_tablas')
 def ver_tablas():
     try:
-        result = db.session.execute("""
+        result = db.session.execute(text("""
             SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = 'public'
-        """)
+        """))
         tablas = [row[0] for row in result]
         return '<br>'.join(tablas)
     except Exception as e:
         return f'❌ Error al listar tablas: {e}'
 
+@app.route('/ver_columnas_causas')
+def ver_columnas_causas():
+    try:
+        result = db.session.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'causas'
+        """))
+        columnas = [row[0] for row in result]
+        return '<br>'.join(columnas)
+    except Exception as e:
+        return f'❌ Error al listar columnas: {e}'
+        
 # ===============================================================
 
 if __name__ == '__main__':
