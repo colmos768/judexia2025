@@ -562,7 +562,9 @@ def debug_error():
 from flask import Flask
 from models import db  # importa el objeto db desde tu archivo
 
-# ========= ⚠️ RUTAS TEMPORALES DE DEPURACIÓN - BORRAR DESPUÉS ==========
+# ========== ⚠️ RUTAS TEMPORALES PARA DEPURACIÓN - ELIMINAR LUEGO ==========
+
+from sqlalchemy import text  # Asegúrate de tener esto en la parte superior del archivo
 
 @app.route('/fix_tipo_causa')
 def fix_tipo_causa():
@@ -577,12 +579,13 @@ def fix_tipo_causa():
 @app.route('/ver_tablas')
 def ver_tablas():
     try:
-        result = db.session.execute(text("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-        """))
-        tablas = [row[0] for row in result]
+        with app.app_context():
+            result = db.session.execute(text("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+            """))
+            tablas = [row[0] for row in result]
         return '<br>'.join(tablas)
     except Exception as e:
         return f'❌ Error al listar tablas: {e}'
@@ -590,17 +593,18 @@ def ver_tablas():
 @app.route('/ver_columnas_causas')
 def ver_columnas_causas():
     try:
-        result = db.session.execute(text("""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'causas'
-        """))
-        columnas = [row[0] for row in result]
+        with app.app_context():
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'causas'
+            """))
+            columnas = [row[0] for row in result]
         return '<br>'.join(columnas)
     except Exception as e:
         return f'❌ Error al listar columnas: {e}'
-        
-# ===============================================================
+
+# =======================================================================
 
 if __name__ == '__main__':
     with app.app_context():
