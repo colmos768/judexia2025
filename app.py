@@ -561,14 +561,15 @@ def debug_error():
 from flask import Flask
 from models import db  # importa el objeto db desde tu archivo
 
+# ======== ⚠️ RUTAS TEMPORALES PARA DEBUG - BORRAR DESPUÉS ========
 @app.route('/fix_tipo_causa')
 def fix_tipo_causa():
     try:
         db.session.execute('ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT \'Otro\'')
         db.session.commit()
-        return 'Columna tipo_causa agregada correctamente.'
+        return '✅ Columna tipo_causa agregada correctamente.'
     except Exception as e:
-        return f'Error: {e}'
+        return f'❌ Error: {e}'
 
 @app.route('/ver_tablas')
 def ver_tablas():
@@ -581,12 +582,13 @@ def ver_tablas():
         tablas = [row[0] for row in result]
         return '<br>'.join(tablas)
     except Exception as e:
-        return f'Error al listar tablas: {e}'
+        return f'❌ Error al listar tablas: {e}'
+
+# ===============================================================
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
 
 
