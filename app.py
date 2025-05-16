@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, Response, flash, make_response, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from werkzeug.utils import secure_filename
@@ -13,178 +13,43 @@ import tiktoken
 import numpy as np
 import io
 import csv
-import traceback  # ⬅️ Agregado para captura de errores 500
+import traceback
 
-from models import FormatoLegal
-from database import db  # ✅ Importación única y correcta
-
-ultimo_error = ""  # Variable global para mostrar errores si ocurre un 500
-
+from models import FormatoLegal, Cliente, Causa, Documento, Honorario, PagoCuota, Contraparte, Gasto
+from database import db
 from dotenv import load_dotenv
+
+ultimo_error = ""
+
 load_dotenv()
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+def create_app():
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", "clave")
+    app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
 
-db.init_app(app)
+    db.init_app(app)
 
-# ========== FLASK APP ==========
-app = Flask(__name__)
-app.secret_key = 'clave_secreta_para_flash'
+    os.makedirs("static/ia", exist_ok=True)
+    os.makedirs("static/formatos", exist_ok=True)
+    os.makedirs("static/documentos", exist_ok=True)
 
-# Crear carpetas necesarias
-os.makedirs("static/ia", exist_ok=True)
-os.makedirs("static/formatos", exist_ok=True)
-os.makedirs("static/documentos", exist_ok=True)
+    openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-# Configurar API KEY de OpenAI
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+    with app.app_context():
+        db.create_all()
 
-# Configurar DB desde variable de entorno
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise Exception("❌ DATABASE_URL no definida. Verifica las variables del entorno en Render.")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-if "?" in DATABASE_URL and "sslmode=" not in DATABASE_URL:
-    DATABASE_URL += "&sslmode=require"
-elif "?" not in DATABASE_URL and "sslmode=" not in DATABASE_URL:
-    DATABASE_URL += "?sslmode=require"
-
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['UPLOAD_FOLDER'] = os.path.join("static", "documentos")
-
-db.init_app(app)  # ✅ Solo una vez, sin repetir
-
-# ========== BASE DE DATOS ==========
-# ¡Sin volver a crear db aquí!
-
-class Cliente(db.Model):
-    __tablename__ = 'clientes'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    rut = db.Column(db.String(12), unique=True, nullable=False)
-    email = db.Column(db.String(100))
-    telefono = db.Column(db.String(20))
-    direccion = db.Column(db.String(200))
-    fecha_nacimiento = db.Column(db.Date)
-    causas = db.relationship('Causa', backref='cliente', lazy=True)
-    pagos = db.relationship('PagoCuota', backref='cliente', lazy=True)
-
-class Causa(db.Model):
-    __tablename__ = 'causas'
-    id = db.Column(db.Integer, primary_key=True)
-    tipo_causa = db.Column(db.String(100), nullable=False)
-    procedimiento = db.Column(db.String(100), nullable=False)
-    judicial = db.Column(db.Boolean, default=True)
-    corte_apelaciones = db.Column(db.String(100), nullable=True)
-    tribunal = db.Column(db.String(150), nullable=True)
-    letra = db.Column(db.String(1), nullable=True)
-    rol_numero = db.Column(db.String(10), nullable=True)
-    rol_anio = db.Column(db.Integer, nullable=True)
-    fecha_ingreso = db.Column(db.Date, nullable=False)
-    ultima_gestion = db.Column(db.String(250), nullable=True)
-    fecha_ultima_gestion = db.Column(db.Date, nullable=True)
-    ingreso_juridico = db.Column(db.Text, nullable=True)
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
-    documentos = db.relationship('Documento', backref='causa', lazy=True)
-    formatos = db.relationship('FormatoLegal', backref='causa', lazy=True)
-
-class Documento(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'), nullable=False)
-    nombre_archivo = db.Column(db.String(200), nullable=False)
-    ruta_archivo = db.Column(db.String(300), nullable=False)
-    tipo = db.Column(db.String(100), nullable=True)
-    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
-
-class FormatoLegal(db.Model):
-    __tablename__ = 'formatos_legales'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre_original = db.Column(db.String(255), nullable=False)
-    filename = db.Column(db.String(255), nullable=False, unique=True)
-    fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
-    usuario = db.Column(db.String(100))
-    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
-    version = db.Column(db.Integer, default=1)
-    observaciones = db.Column(db.String(255))
-
-class Honorario(db.Model):
-    __tablename__ = 'honorarios'
-    id = db.Column(db.Integer, primary_key=True)
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
-    causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'), nullable=True)
-    descripcion = db.Column(db.String(255), nullable=False)
-    monto_total = db.Column(db.Float, nullable=False)
-    fecha_emision = db.Column(db.Date, default=datetime.utcnow)
-    en_cuotas = db.Column(db.Boolean, default=False)
-    numero_cuotas = db.Column(db.Integer, default=1)
-    estado = db.Column(db.String(50), default='pendiente')
-    pagos = db.relationship('PagoCuota', backref='honorario', lazy=True)
-
-class PagoCuota(db.Model):
-    __tablename__ = 'pagos_cuotas'
-    id = db.Column(db.Integer, primary_key=True)
-    honorario_id = db.Column(db.Integer, db.ForeignKey('honorarios.id'), nullable=False)
-    numero_cuota = db.Column(db.Integer)
-    monto_pagado = db.Column(db.Float)
-    fecha_pago = db.Column(db.Date)
-    vencimiento = db.Column(db.Date)
-    estado = db.Column(db.String(50), default='pendiente')
-    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
-
-class Gasto(db.Model):
-    __tablename__ = 'gastos'
-    id = db.Column(db.Integer, primary_key=True)
-    descripcion = db.Column(db.String(255), nullable=False)
-    monto = db.Column(db.Float, nullable=False)
-    fecha = db.Column(db.Date, default=date.today)
-    categoria = db.Column(db.String(100))
-
-with app.app_context():
-    db.create_all()
-# ========== FUNCIONES IA ==========
-def extraer_texto(path):
-    if path.endswith(".pdf"):
-        with open(path, "rb") as f:
-            lector = PyPDF2.PdfReader(f)
-            return " ".join([p.extract_text() or "" for p in lector.pages])
-    elif path.endswith(".docx"):
-        doc = docx.Document(path)
-        return "\n".join([p.text for p in doc.paragraphs])
-    elif path.endswith(".txt"):
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    else:
-        return ""
-
-def dividir_en_chunks(texto, max_tokens=500):
-    tokenizer = tiktoken.get_encoding("cl100k_base")
-    palabras = texto.split(".")
-    chunks = []
-    actual = ""
-    for p in palabras:
-        if len(tokenizer.encode(actual + p)) < max_tokens:
-            actual += p + "."
-        else:
-            chunks.append(actual.strip())
-            actual = p + "."
-    if actual:
-        chunks.append(actual.strip())
-    return chunks
-
-def obtener_embedding(texto):
-    return openai.Embedding.create(
-        input=texto,
-        model="text-embedding-ada-002"
-    )["data"][0]["embedding"]
-
-def similitud_coseno(a, b):
-    a = np.array(a)
-    b = np.array(b)
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+    # =================== RUTAS TEMPORALES ===================
+    @app.route('/fix_tipo_causa')
+    def fix_tipo_causa():
+        try:
+            db.session.execute(text("ALTER TABLE causas ADD COLUMN tipo_causa VARCHAR(100) NOT NULL DEFAULT 'Otro'"))
+            db.session.commit()
+            return '✅ Columna tipo_causa agregada correctamente.'
+        except Exception as e:
+            return f'❌ Error al ejecutar ALTER TABLE: {e}'
 # ========== RUTAS ==========
 @app.route("/")
 def index():
