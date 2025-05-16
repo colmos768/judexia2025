@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 
-# Asume que la instancia db es pasada desde app.py
 db = SQLAlchemy()
 
 # ===================== MODELOS =====================
@@ -10,13 +9,16 @@ class Cliente(db.Model):
     __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    rut_num = db.Column(db.String(8))  # <- ESTO
-    rut_dv = db.Column(db.String(1))   # <- ESTO
+    rut_num = db.Column(db.String(8))
+    rut_dv = db.Column(db.String(1))
     email = db.Column(db.String(100))
     telefono = db.Column(db.String(20))
     direccion = db.Column(db.String(200))
-    profesion = db.Column(db.String(100))  # <- ESTO
+    profesion = db.Column(db.String(100))
     fecha_nacimiento = db.Column(db.Date)
+
+    causas = db.relationship('Causa', backref='cliente', lazy=True)
+    pagos = db.relationship('PagoCuota', backref='cliente', lazy=True)
 
 class Contraparte(db.Model):
     __tablename__ = 'contrapartes'
@@ -27,6 +29,7 @@ class Contraparte(db.Model):
     telefono = db.Column(db.String(20))
     direccion = db.Column(db.String(200))
 
+    causas = db.relationship('Causa', backref='contraparte', lazy=True)
 
 class Documento(db.Model):
     __tablename__ = 'documentos'
@@ -54,7 +57,6 @@ class Causa(db.Model):
     procedimiento = db.Column(db.String(100), nullable=False)
     judicial = db.Column(db.Boolean, default=True)
 
-    # Solo si judicial
     corte_apelaciones = db.Column(db.String(100), nullable=True)
     tribunal = db.Column(db.String(150), nullable=True)
     letra = db.Column(db.String(1), nullable=True)
@@ -71,23 +73,31 @@ class Causa(db.Model):
 
     documentos = db.relationship('Documento', backref='causa', lazy=True)
     formatos = db.relationship('FormatoLegal', backref='causa', lazy=True)
+    honorarios = db.relationship('Honorario', backref='causa', lazy=True)
 
 class Honorario(db.Model):
     __tablename__ = 'honorarios'
     id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
     causa_id = db.Column(db.Integer, db.ForeignKey('causas.id'))
-    tipo = db.Column(db.String(50))
+    descripcion = db.Column(db.String(255))
     monto_total = db.Column(db.Integer)
-    cuotas = db.Column(db.Integer)
+    fecha_emision = db.Column(db.Date, default=date.today)
+    en_cuotas = db.Column(db.Boolean, default=False)
+    numero_cuotas = db.Column(db.Integer, default=1)
+    estado = db.Column(db.String(50))
 
+    pagos = db.relationship('PagoCuota', backref='honorario', lazy=True)
 
 class PagoCuota(db.Model):
     __tablename__ = 'pagos_cuotas'
     id = db.Column(db.Integer, primary_key=True)
+    honorario_id = db.Column(db.Integer, db.ForeignKey('honorarios.id'))
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
     monto_pagado = db.Column(db.Integer)
     fecha_pago = db.Column(db.Date)
     cuota_numero = db.Column(db.Integer)
     total_cuotas = db.Column(db.Integer)
-    estado = db.Column(db.String(50))  # Ej: pagado, pendiente, vencida
+    estado = db.Column(db.String(50))
+    vencimiento = db.Column(db.Date)
 
