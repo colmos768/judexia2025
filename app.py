@@ -94,6 +94,14 @@ class PagoCuota(db.Model):
     estado = db.Column(db.String(50), default='pendiente')
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'))
 
+class Gasto(db.Model):
+    __tablename__ = 'gastos'
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.Date, default=date.today)
+    categoria = db.Column(db.String(100))
+
 with app.app_context():
     db.create_all()
 
@@ -431,15 +439,6 @@ if __name__ == '__main__':
 
 
 
-
-
-class Gasto(db.Model):
-    __tablename__ = 'gastos'
-    id = db.Column(db.Integer, primary_key=True)
-    descripcion = db.Column(db.String(255), nullable=False)
-    monto = db.Column(db.Float, nullable=False)
-    fecha = db.Column(db.Date, default=date.today)
-    categoria = db.Column(db.String(100))
 
 
 @app.route('/registrar_gasto', methods=['GET', 'POST'])
