@@ -21,6 +21,8 @@ os.makedirs("static/formatos", exist_ok=True)
 
 # Configurar API KEY de OpenAI
 openai.api_key = os.environ.get("OPENAI_API_KEY")
+if not openai.api_key:
+    raise Exception("❌ OPENAI_API_KEY no definida. Verifica las variables del entorno en Render.")
 
 # Configurar DB desde variable de entorno
 DATABASE_URL = os.environ.get("DATABASE_URL")
