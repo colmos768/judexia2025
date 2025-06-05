@@ -414,11 +414,6 @@ def exportar_facturacion():
 def servicio():
     return render_template("servicio.html")
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
-
 
 
 
@@ -455,20 +450,9 @@ def registrar_gasto():
         db.session.add(nuevo_gasto)
         db.session.commit()
         return redirect(url_for('facturacion'))
-
     return render_template('registrar_gasto.html', date_today=date.today())
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
