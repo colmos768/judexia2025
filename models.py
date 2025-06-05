@@ -77,3 +77,12 @@ class PagoCuota(db.Model):
     fecha_pago = db.Column(db.Date)
     vencimiento = db.Column(db.Date)
     estado = db.Column(db.String(20), default="pendiente")  # pendiente / pagado / vencida
+
+
+class Gasto(db.Model):
+    __tablename__ = 'gastos'
+    id = db.Column(db.Integer, primary_key=True)
+    descripcion = db.Column(db.String(255), nullable=False)
+    monto = db.Column(db.Float, nullable=False)
+    fecha = db.Column(db.Date, default=date.today)
+    categoria = db.Column(db.String(100))
