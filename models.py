@@ -1,7 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 
-db = SQLAlchemy()
+# Usamos la instancia de SQLAlchemy definida en database.py para que la
+# configuración sea única en toda la aplicación.
+from database import db
 
 # ===================== MODELOS =====================
 
