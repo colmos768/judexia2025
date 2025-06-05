@@ -1,4 +1,10 @@
-from flask import render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for
+import os
+import traceback
+from dotenv import load_dotenv
+
+# Para almacenar detalles de la última excepción en el manejador 500
+ultimo_error = ""
 
 def register_routes_generales(app):
     @app.route("/")
@@ -365,6 +371,7 @@ def register_routes_facturacion(app):
             data = request.form
             nuevo_pago = PagoCuota(
                 honorario_id=honorario.id,
+                cliente_id=honorario.cliente_id,
                 numero_cuota=int(data['numero_cuota']),
                 monto_pagado=float(data['monto_pagado']),
                 fecha_pago=data.get('fecha_pago') or datetime.utcnow().date(),
@@ -482,7 +489,32 @@ def register_routes_utilidades(app):
         global ultimo_error
         ultimo_error = traceback.format_exc()
         return render_template("500.html"), 500
-from main import create_app
+def create_app():
+    """Crea y configura la instancia de la aplicación Flask."""
+
+    load_dotenv()
+    app = Flask(__name__)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "DATABASE_URL", "sqlite:///app.db"
+    )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev")
+
+    db.init_app(app)
+
+    # Registro de rutas agrupadas por funcionalidades
+    register_routes_generales(app)
+    register_routes_clientes(app)
+    register_routes_causas(app)
+    register_routes_ia(app)
+    register_routes_formatos(app)
+    register_routes_facturacion(app)
+    register_routes_servicio(app)
+    register_routes_utilidades(app)
+
+    return app
+
 
 # Crear la aplicación
 app = create_app()
